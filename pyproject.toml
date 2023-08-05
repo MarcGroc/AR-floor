@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "ar-floor"
+version = "0.1.0"
+description = ""
+authors = ["MarcGroc <marcgroc12@gmail.com>"]
+readme = "README.md"
+packages = [{include = "ar_floor"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+sqlalchemy = "^2.0.19"
+pydantic = "^2.1.1"
+pre-commit = "^3.3.3"
+flake8 = "^6.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
