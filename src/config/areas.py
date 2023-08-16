@@ -6,5 +6,5 @@ class FloorAreas(Enum):
     INNER_FLOOR = 6
     OUTER_FLOOR = 3
     AISLE_GAP = 4
-    FIRST_AISLE = 9
+    FIRST_AISLE = 3
     FIRST_WAITING_LINE = 1

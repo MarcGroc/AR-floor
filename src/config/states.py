@@ -1,6 +1,6 @@
 from enum import Enum
 
-# TODO add int parameter, change ON_PATH to 2
+
 class FloorLocationStates(Enum):
     """
     Attributes:
