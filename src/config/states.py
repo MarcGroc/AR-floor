@@ -22,3 +22,4 @@ class FloorLocationStates(Enum):
     WAITING = 3
     PICKING = 4
     STOWING = 5
+    CHARGING = 6
