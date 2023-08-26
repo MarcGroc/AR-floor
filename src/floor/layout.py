@@ -3,8 +3,7 @@ from typing import List
 
 from src.config.states import FloorLocationStates
 from src.config.areas import FloorAreas
-
-__all__ = ["ARFloorLayout"]
+from src.floor.location import Location
 
 
 class ARFloorLayout:
@@ -13,27 +12,31 @@ class ARFloorLayout:
     def __init__(self):
         self.__x_axis: PositiveInt = 30
         self.__y_axis: PositiveInt = 30
-        self.__outer = FloorAreas.OUTER_FLOOR.value
-        self.__inner = FloorAreas.INNER_FLOOR.value
-        self.__first_aisle = FloorAreas.FIRST_AISLE.value
-        self.__aisle_gap = FloorAreas.AISLE_GAP.value
-        self.__waiting = FloorLocationStates.WAITING.value
-        self.__first_waiting_line = FloorAreas.FIRST_WAITING_LINE.value
-        self.__on_path = FloorLocationStates.ON_PATH.value
-        self.__not_taken = FloorLocationStates.NOT_TAKEN.value
-        self.__taken = FloorLocationStates.TAKEN.value
-        self.__picking = FloorLocationStates.PICKING.value
-        self.__stowing = FloorLocationStates.STOWING.value
-        self.__charging = FloorLocationStates.CHARGING.value
-        self.__floor_layout = self.__set_charging_area()
+        # for state in FloorLocationStates:
+        #     setattr(self, f"{state.name.lower()}", state.value)
+        #
+        # for area in FloorAreas:
+        #     setattr(self, f"_{area.name.lower()}", area.value)
+
+        self._outer = FloorAreas.OUTER_FLOOR
+        self._inner = FloorAreas.INNER_FLOOR
+        self._first_aisle = FloorAreas.FIRST_AISLE
+        self._aisle_gap = FloorAreas.AISLE_GAP
+        self._waiting = FloorLocationStates.WAITING
+        self._first_waiting_line = FloorAreas.FIRST_WAITING_LINE
+        self._on_path = FloorLocationStates.ON_PATH
+        self._not_taken = FloorLocationStates.NOT_TAKEN
+        self._taken = FloorLocationStates.TAKEN
+        self._picking = FloorLocationStates.PICKING
+        self._stowing = FloorLocationStates.STOWING
+        self._charging = FloorLocationStates.CHARGING
+        self._storing = FloorLocationStates.STORING
+        self._floor_layout = self.__set_charging_area()
 
     def __create_floor_layout(self) -> List[List[NonNegativeInt]]:
-        return [
-            [self.__not_taken for _ in range(self.__x_axis)]
-            for _ in range(self.__y_axis)
-        ]
+        return [[None for _ in range(self.__x_axis)] for _ in range(self.__y_axis)]
 
-    def __set_cells_for_shelve_storing(self):
+    def __set_cells_for_shelve_storing(self) -> List[List[Location]]:
         """
         Sets the cells for shelve storing on the floor layout.
 
@@ -42,16 +45,16 @@ class ARFloorLayout:
         layout_with_paths = self.__create_floor_layout()
         layout = layout_with_paths
 
-        for row in layout[self.__inner: -self.__inner]:
+        for row in layout[self._inner.value : -self._inner.value]:
             for cell, value in enumerate(row):
                 if (
-                    self.__inner <= cell < self.__y_axis - self.__inner
-                    and value != self.__on_path
+                    self._inner.value <= cell < self.__y_axis - self._inner.value
+                    and value != self._on_path
                 ):
-                    row[cell] = self.__taken
+                    row[cell] = Location(self._storing, None)
         return layout
 
-    def __set_cells_for_waiting(self):
+    def __set_cells_for_waiting(self) -> List[List[Location]]:
         """
         Sets cells for waiting in the ARFloorLayout.
 
@@ -60,117 +63,127 @@ class ARFloorLayout:
         layout_with_storing = self.__set_cells_for_shelve_storing()
         layout = layout_with_storing
 
-        for row in layout[self.__first_waiting_line : self.__outer]:
+        for row in layout[self._first_waiting_line.value : self._outer.value]:
             # top horizontal
             for cell in range(len(row)):
                 if (
-                    self.__first_waiting_line
+                    self._first_waiting_line.value
                     <= cell
-                    < self.__x_axis - self.__first_waiting_line
+                    < self.__x_axis - self._first_waiting_line.value
                 ):
-                    row[cell] = self.__waiting
+                    row[cell] = Location(self._waiting, None)
 
-        for row in layout[self.__x_axis - self.__outer : -self.__first_waiting_line]:
+        for row in layout[
+            self.__x_axis - self._outer.value : -self._first_waiting_line.value
+        ]:
             # bottom horizontal
             for cell in range(len(row)):
                 if (
-                    self.__first_waiting_line
+                    self._first_waiting_line.value
                     <= cell
-                    < self.__x_axis - self.__first_waiting_line
+                    < self.__x_axis - self._first_waiting_line.value
                 ):
-                    row[cell] = self.__waiting
+                    row[cell] = Location(self._waiting, None)
 
-        for row in layout[self.__first_waiting_line : -self.__first_waiting_line]:
+        for row in layout[
+            self._first_waiting_line.value : -self._first_waiting_line.value
+        ]:
             # vertical
             for cell in range(len(row)):
                 if (
-                    self.__first_waiting_line <= cell < self.__outer
-                    and cell != self.__on_path
-                    or self.__y_axis - self.__outer
+                    self._first_waiting_line.value <= cell < self._outer.value
+                    and cell != self._on_path
+                    or self.__y_axis - self._outer.value
                     <= cell
-                    < self.__y_axis - self.__first_waiting_line
-                    and cell != self.__on_path
+                    < self.__y_axis - self._first_waiting_line.value
+                    and cell != self._on_path
                 ):
-                    row[cell] = self.__waiting
+                    row[cell] = Location(self._waiting, None)
 
         return layout
 
-    def __set_cells_for_picking_and_stowing(self):
+    def __set_cells_for_picking_and_stowing(self) -> List[List[Location]]:
         layout_with_waiting = self.__set_cells_for_waiting()
         layout = layout_with_waiting
 
         for cell in range(6, len(layout[0]) - 4, 8):
             # horizontal rows picking
-            layout[0][cell] = self.__picking
-            layout[-1][cell] = self.__picking
+            layout[0][cell] = Location(self._picking, None)
+            layout[-1][cell] = Location(self._picking, None)
         for cell in range(10, len(layout[0]) - 4, 8):
             # horizontal rows stowing
-            layout[0][cell] = self.__stowing
-            layout[-1][cell] = self.__stowing
+            layout[0][cell] = Location(self._stowing, None)
+            layout[-1][cell] = Location(self._stowing, None)
 
         for cell in range(4, len(layout) - 4, 8):
             # left and right columns picking
-            layout[cell][0] = self.__picking
-            layout[cell][-1] = self.__picking
+            layout[cell][0] = Location(self._picking, None)
+            layout[cell][-1] = Location(self._picking, None)
         for cell in range(8, len(layout) - 4, 8):
             # left and right columns stowing
-            layout[cell][0] = self.__stowing
-            layout[cell][-1] = self.__stowing
+            layout[cell][0] = Location(self._stowing, None)
+            layout[cell][-1] = Location(self._stowing, None)
 
         return layout
 
-    def __set_cells_for_paths(self) -> List[List[NonNegativeInt]]:
+    def __set_cells_for_paths(self) -> List[List[Location]]:
         clean_floor = self.__set_cells_for_picking_and_stowing()
         layout = clean_floor
-        for row in layout[self.__outer : -self.__outer]:
+        for row in layout[self._outer.value : -self._outer.value]:
             # vertical left and right
             for cell in range(len(row)):
                 if (
-                    self.__outer <= cell < self.__inner
-                    or self.__y_axis - self.__inner
+                    self._outer.value <= cell < self._inner.value
+                    or self.__y_axis - self._inner.value
                     <= cell
-                    < self.__y_axis - self.__outer
+                    < self.__y_axis - self._outer.value
                 ):
-                    row[cell] = self.__on_path
-        for row in layout[self.__outer : self.__inner]:
+                    row[cell] = Location(self._on_path, None)
+        for row in layout[self._outer.value : self._inner.value]:
             # horizontal top
             for cell in range(len(row)):
-                if self.__inner <= cell <= self.__x_axis - self.__inner:
-                    row[cell] = self.__on_path
-
-        for row in layout[self.__x_axis - self.__inner : self.__x_axis - self.__outer]:
-            # horizontal bottom
-            for i in range(len(row)):
-                if self.__inner <= i < self.__y_axis - self.__inner:
-                    row[i] = self.__on_path
+                if self._inner.value <= cell <= self.__x_axis - self._inner.value:
+                    row[cell] = Location(self._on_path, None)
 
         for row in layout[
-            self.__first_aisle : self.__x_axis - self.__inner : self.__aisle_gap
+            self.__x_axis - self._inner.value : self.__x_axis - self._outer.value
+        ]:
+            # horizontal bottom
+            for cell in range(len(row)):
+                if self._inner.value <= cell < self.__y_axis - self._inner.value:
+                    row[cell] = Location(self._on_path, None)
+
+        for row in layout[
+            self._first_aisle.value : self.__x_axis
+            - self._inner.value : self._aisle_gap.value
         ]:
             # aisles horizontal
             for cell in range(len(row)):
-                row[cell] = self.__on_path
+                row[cell] = Location(self._on_path, None)
         for row in layout:
             # aisles vertical
             for cell in range(
-                self.__first_aisle, self.__y_axis - self.__inner, self.__aisle_gap
+                self._first_aisle.value,
+                self.__y_axis - self._inner.value,
+                self._aisle_gap.value,
             ):
-                row[cell] = self.__on_path
+                row[cell] = Location(self._on_path, None)
 
         return layout
 
-    def __set_charging_area(self):
+    def __set_charging_area(self)-> List[List[Location]]:
         layout = self.__set_cells_for_paths()
 
-        for row in layout[-self.__outer:]:
-            for cell in range(len(row) - self.__outer, len(row)):
-                row[cell] = self.__charging
+        for row in layout[-self._outer.value :]:
+            for cell in range(len(row) - self._outer.value, len(row)):
+                row[cell] = Location(self._charging, None)
         return layout
 
-    def generate(self):
-        return self.__floor_layout
+    @property
+    def generate(self) -> List[List[NonNegativeInt]]:
+        return self._floor_layout
 
     def __repr__(self):
         return "\n".join(
-            " ".join(str(cell) for cell in row) for row in self.__floor_layout
+            " ".join(str(cell) for cell in row) for row in self._floor_layout
         )

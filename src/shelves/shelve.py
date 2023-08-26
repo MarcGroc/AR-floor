@@ -1,16 +1,24 @@
 import uuid
 
-from pydantic import PositiveInt, field_validator
+from pydantic import PositiveInt
+
+MAX_ROWS = 10
+MAX_COLUMNS = 6
 
 
-class ARShelve:
-    def __init__(self, columns_number: PositiveInt, rows_number: PositiveInt):
+class Shelve:
+    def __init__(self, columns_number: PositiveInt, rows_number: PositiveInt) -> None:
         self.id = uuid.uuid4()
-        self.columns_number = columns_number  # max 6
-        self.rows_number = rows_number  # max 10
-        self.generate_shelf = self.create_grid()
-        self.current_location = self.set_current_location()
-    def create_grid(self):
+        if columns_number > MAX_COLUMNS or rows_number > MAX_ROWS:
+            raise "Invalid dimensions for the shelf"
+        self.columns_number = columns_number
+        self.rows_number = rows_number
+        self.generate_shelf = self.__create_grid()
+        self.available = None
+        self.contents = self.generate_shelf
+
+    def __create_grid(self) -> list[list[list[int]]]:
+        """Creates shelve with 4 identical sides"""
         side = [
             [_ for _ in range(self.rows_number)] for _ in range(self.columns_number)
         ]
@@ -18,9 +26,8 @@ class ARShelve:
         return shelf
 
     def generate(self):
-        return self.generate_shelf
-    def set_current_location(self):
-        pass
+        self.available = True
+        return self
 
     def check_contents(self):
         # check if shelf bin is empty or its space to shelve items, check weight of items
@@ -31,16 +38,14 @@ class ARShelve:
         pass
 
     def add_item(self):
-        # add item to bin and update weight and space left in the bin
         pass
 
     def display_items(self):
         # for visualization
         pass
 
-    def get_status(self):
-        # id, location, stock
-        pass
+    def get_status(self) -> dict:
+        return {"id": self.id, "available": self.available, "rows": self.rows_number, "cols": self.columns_number}
 
-    def __str__(self):
-        return f"ARShelve: {self.id}, Grid {self.generate}"
+    def __repr__(self):
+        return self.__class__.__name__
