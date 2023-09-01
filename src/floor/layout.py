@@ -27,7 +27,7 @@ class ARFloorLayout:
         self._storing = FloorLocationStates.STORING
         self._floor_layout = self.__set_charging_area()
 
-    def __create_floor_layout(self) -> List[List[NonNegativeInt]]:
+    def __create_floor_layout(self) -> List[List[Location]]:
         return [[Location(row, col) for col in range(self.__x_axis)] for row in range(self.__y_axis)]
 
     def __set_cells_for_shelve_storing(self) -> List[List[Location]]:
@@ -93,7 +93,6 @@ class ARFloorLayout:
                     and cell != self._on_path
                 ):
                     row[cell].purpose = self._on_path
-
 
         return layout
 

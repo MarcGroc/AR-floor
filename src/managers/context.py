@@ -11,16 +11,16 @@ from src.config.states import FloorLocationStates
 class MainManager:
     def __init__(self) -> None:
         self.layout = ARFloorLayout()
-        self.robot = Robot  # for initialization
-        self.shelve = Shelve  # as above
-        self.all_shelves = []  # list of all shelves on the floor
-        self.all_robots = []  # list of all robots on the floor
+        self.robot = Robot
+        self.shelve = Shelve
+        self.all_shelves = []
+        self.all_robots = []
         self.floor = self.initialize()
         self.available_locations = (
             self.get_not_taken_location()
         )  # empty areas where shelve can be stored
-        self.available_robots = self.get_available_robots()  # without task assigned
-        self.available_shelves = self.get_available_shelves()  # without task assigned
+        self.available_robots = self.get_available_robots()
+        self.available_shelves = self.get_available_shelves()
         self.pathfinder = Pathfinder
 
     def _set_shelves(self) -> list[list[Shelve]]:
@@ -55,26 +55,25 @@ class MainManager:
         return self.floor
 
     @property
-    def shelves_amount(self):
+    def shelves_amount(self) -> int:
         return len(self.all_shelves)
 
     @property
-    def robots_amount(self):
+    def robots_amount(self) -> int:
         return len(self.all_robots)
 
-    def get_available_robots(self):
+    def get_available_robots(self) -> list[Robot]:
         return [robot for robot in self.all_robots if robot.available is True]
 
-    def get_available_shelves(self):
+    def get_available_shelves(self) -> list[Shelve]:
         return [shelve for shelve in self.all_shelves if shelve.available is True]
 
-    def get_shelve_location(self):
-        # for now hardcoded
-        return self.all_shelves[60].current_location
+    def get_shelve_location(self) -> list[int, int]:
+        return self.available_shelves[randrange(0, self.shelves_amount)].current_location
 
-    def assign_task(self):
-        shelve_location = self.get_shelve_location() # hardcoded for now
-        robot = self.available_robots[00] # hardcoded for now
+    def generate_path(self) -> list[list[int,int]]:
+        shelve_location = self.get_shelve_location()
+        robot = self.available_robots[0] # hardcoded for now
         path = self.pathfinder(self.floor, robot.current_location, shelve_location)
         return path.a_star()
 
@@ -82,7 +81,7 @@ class MainManager:
         # if pull_up_shelve
         pass
 
-    def get_not_taken_location(self):
+    def get_not_taken_location(self) -> list:
         empty_locations = []
         for row in self.floor:
             for cell, location in enumerate(row):
@@ -93,18 +92,8 @@ class MainManager:
                     empty_locations.append(location.coordinates)
         return empty_locations
 
-    # def send_to_charging_station(self):
-    #     while self.robot.battery_level > 10:
-    #         time.sleep(60)
-    #         self.robot.battery_level -= 1
-    #     if self.robot.battery_level <= 10:
-    #         if self.available:
-    #             # drive to charging station
-    #             pass
-    #         else:
-    #             # drive to nearest shelve location and then to charging station
-    #             self.get_empty_shelve_location()
-    #     pass
+    def send_to_charging_station(self):
+        pass
 
     def __repr__(self):
         return "\n".join("".join(str(cell) for cell in row) for row in self.floor)
@@ -113,5 +102,5 @@ class MainManager:
 a = MainManager()
 # print(a.floor[-10][-10].get_status())
 # print(a.floor[-10][-10].content.get_status())
-print(a.assign_task())
-print(a.available_robots[0].current_location)
+# print(a.floor[-1][-1].content.get_status())
+print(a.generate_path())

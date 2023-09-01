@@ -1,23 +1,24 @@
 import uuid
-from typing import Optional, Union
-
-from src.config.states import FloorLocationStates
-from src.robots.robot import Robot
-from src.shelves.shelve import Shelve
 
 
 class Location:
     def __init__(
-        self, row, col,
+        self,
+        row,
+        col,
     ) -> None:
         self.__id = uuid.uuid4()
         self.coordinates = [row, col]
         self.purpose = None
         self.content = None
+
         # A* algorithm
-        self.f_value = float('inf')
-        self.g_value = float('inf')
+        self.f_value = 0
+        self.g_value = 0
         self.parent = None
+
+    def __eq__(self, other):
+        return self.coordinates == other.coordinates
 
     @property
     def get_id(self):
@@ -29,4 +30,3 @@ class Location:
             "purpose": self.purpose,
             "content": self.content,
         }
-
