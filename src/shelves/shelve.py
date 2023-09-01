@@ -14,6 +14,7 @@ class Shelve:
         self.columns_number = columns_number
         self.rows_number = rows_number
         self.generate_shelf = self.__create_grid()
+        self.current_location = None
         self.available = None
         self.contents = self.generate_shelf
 
@@ -45,7 +46,7 @@ class Shelve:
         pass
 
     def get_status(self) -> dict:
-        return {"id": self.id, "available": self.available, "rows": self.rows_number, "cols": self.columns_number}
+        return {"id": self.id, "current_location": self.current_location, "available": self.available, "rows": self.rows_number, "cols": self.columns_number}
 
     def __repr__(self):
         return self.__class__.__name__
