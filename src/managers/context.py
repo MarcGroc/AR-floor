@@ -1,13 +1,15 @@
-from random import randrange
-from typing import Optional, Union
+from random import randrange, choice
 
 from src.floor.layout import ARFloorLayout
+from src.floor.location import Location
+from src.items.Item import Item
 from src.paths.pathfinder import Pathfinder
 from src.robots.robot import Robot
 from src.shelves.shelve import Shelve
 from src.config.states import FloorLocationStates
 
 
+# todo typing to refcartoring
 class MainManager:
     def __init__(self) -> None:
         self.layout = ARFloorLayout()
@@ -16,16 +18,17 @@ class MainManager:
         self.all_shelves = []
         self.all_robots = []
         self.floor = self.initialize()
-        self.available_locations = (
-            self.get_not_taken_location()
-        )  # empty areas where shelve can be stored
+        self.empty_storing_locations = self.get_not_taken_location()
         self.available_robots = self.get_available_robots()
         self.available_shelves = self.get_available_shelves()
+        self.workstations_picking = self.get_all_workstations_picking()
+        self.workstations_stowing = self.get_all_workstations_stowing()
         self.pathfinder = Pathfinder
 
-    def _set_shelves(self) -> list[list[Shelve]]:
+    def _set_shelves(self) -> list[list[Location]]:
         floor = self.layout.generate
         for row in floor:
+            # antipattern refactoring
             for cell, location in enumerate(row):
                 if location is None:
                     continue
@@ -38,18 +41,18 @@ class MainManager:
                     self.all_shelves.append(new_shelve)
         return floor
 
-    def _set_robots(self) -> list[list[Optional[Union["Robot", "Shelve"]]]]:
-        # todo to by jakos przerobic bo ja biore return z metody wyzej i do kolejnej iteracji
+    def _set_robots(self) -> list[list[Location]]:
         floor = self._set_shelves()
-        for row in floor[-3:]:
-            for cell in range(len(row) - 3, len(row)):
-                new_robot = self.robot().generate()
-                row[cell].content = new_robot
-                row[cell].content.current_location = row[cell].coordinates
-                self.all_robots.append(new_robot)
+        for row in floor:
+            for cell, location in enumerate(row):
+                if location.purpose == FloorLocationStates.CHARGING:
+                    new_robot = self.robot().generate()
+                    row[cell].content = new_robot
+                    row[cell].content.current_location = row[cell].coordinates
+                    self.all_robots.append(new_robot)
         return floor
 
-    def initialize(self) -> list[list[Optional[Union["Robot", "Shelve"]]]]:
+    def initialize(self) -> list[list[Location]]:
         self.floor = self._set_shelves()
         self.floor = self._set_robots()
         return self.floor
@@ -57,6 +60,22 @@ class MainManager:
     @property
     def shelves_amount(self) -> int:
         return len(self.all_shelves)
+
+    def get_all_workstations_picking(self):
+        return [
+            location.coordinates
+            for row in self.floor
+            for location in row
+            if location.purpose == FloorLocationStates.PICKING
+        ]
+
+    def get_all_workstations_stowing(self):
+        return [
+            location.coordinates
+            for row in self.floor
+            for location in row
+            if location.purpose == FloorLocationStates.STOWING
+        ]
 
     @property
     def robots_amount(self) -> int:
@@ -69,38 +88,73 @@ class MainManager:
         return [shelve for shelve in self.all_shelves if shelve.available is True]
 
     def get_shelve_location(self) -> list[int, int]:
-        return self.available_shelves[randrange(0, self.shelves_amount)].current_location
-
-    def generate_path(self) -> list[list[int,int]]:
-        shelve_location = self.get_shelve_location()
-        robot = self.available_robots[0] # hardcoded for now
-        path = self.pathfinder(self.floor, robot.current_location, shelve_location)
-        return path.a_star()
-
-    def get_station_location(self):
-        # if pull_up_shelve
-        pass
+        return choice(self.available_shelves).current_location
 
     def get_not_taken_location(self) -> list:
-        empty_locations = []
-        for row in self.floor:
-            for cell, location in enumerate(row):
-                if (
-                    location.purpose == FloorLocationStates.STORING
-                    and location.content is None
-                ):
-                    empty_locations.append(location.coordinates)
-        return empty_locations
+        return [
+            location.coordinates
+            for row in self.floor
+            for location in row
+            if location.purpose == FloorLocationStates.STORING
+            and location.content is None
+        ]
+
+    def get_workstations_locations(self):
+        return [
+            location.coordinates
+            for row in self.floor
+            for location in row
+            if location.purpose == FloorLocationStates.PICKING
+        ]
+
+    def get_shelve_path(self) -> Robot:
+        """Returns Robot with shelve on it"""
+        shelve_location = self.get_shelve_location()
+        robot = self.available_robots[0]  # hardcoded for now
+        path_to_shelve = self.pathfinder(
+            self.floor, robot.current_location, shelve_location
+        ).a_star_to_shelve()
+        robot.path = path_to_shelve
+        robot.drive()
+        if robot.current_location == shelve_location:
+            self.floor[shelve_location[0]][shelve_location[1]].content.available = False
+            self.floor[shelve_location[0]][
+                shelve_location[1]
+            ].content.current_location = robot.current_location
+
+            robot.taken_shelve = self.floor[shelve_location[0]][
+                shelve_location[1]
+            ].content
+            self.floor[shelve_location[0]][shelve_location[1]].content = None
+            robot.target_location = None
+            return robot
+
+    def get_workstation_path(self):
+        workstation_location = choice(self.workstations_stowing)  # hardcoded for now
+        robot = self.get_shelve_path()
+        path_to_path = self.pathfinder(
+            self.floor, robot.current_location, workstation_location
+        ).a_star_to_nearest_on_path_location()
+        robot.path = path_to_path
+        robot.drive()
+
+        path_to_workstation = self.pathfinder(
+            self.floor, robot.current_location, workstation_location
+        ).a_star_to_workstation()
+        robot.path = path_to_workstation
+        robot.drive()
+        robot.target_location = None
+        robot.taken_shelve.current_location = robot.current_location
+        return robot
 
     def send_to_charging_station(self):
         pass
 
     def __repr__(self):
-        return "\n".join("".join(str(cell) for cell in row) for row in self.floor)
+        return "\n".join(" ".join(str(cell) for cell in row) for row in self.floor)
 
 
+i = Item(10, 10, 10, 10, "Item-1")
 a = MainManager()
-# print(a.floor[-10][-10].get_status())
-# print(a.floor[-10][-10].content.get_status())
-# print(a.floor[-1][-1].content.get_status())
-print(a.generate_path())
+a.available_shelves[0].add_item(i)
+print(a.available_shelves[0].contents[0][0].content)
