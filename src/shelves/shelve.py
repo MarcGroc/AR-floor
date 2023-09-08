@@ -2,8 +2,12 @@ import uuid
 
 from pydantic import PositiveInt
 
+from src.shelves.bin import Bin
+from src.items import Item
+
 MAX_ROWS = 10
 MAX_COLUMNS = 6
+SHELVE_WIDTH = 100
 
 
 class Shelve:
@@ -13,40 +17,44 @@ class Shelve:
             raise "Invalid dimensions for the shelf"
         self.columns_number = columns_number
         self.rows_number = rows_number
+        self.bin_size = SHELVE_WIDTH / self.columns_number
         self.generate_shelf = self.__create_grid()
         self.current_location = None
         self.available = None
-        self.contents = self.generate_shelf
+        self.contents = None
 
-    def __create_grid(self) -> list[list[list[int]]]:
+    def __create_grid(self) -> list[list[Bin]]:
         """Creates shelve with 4 identical sides"""
         side = [
-            [_ for _ in range(self.rows_number)] for _ in range(self.columns_number)
+            Bin(row, col, self.bin_size) for col in range(self.rows_number)
+            for row in range(self.columns_number)
         ]
-        shelf = [side for _ in range(4)]
-        return shelf
+        return [side for _ in range(4)]
+
 
     def generate(self):
         self.available = True
+        self.contents = self.generate_shelf
         return self
 
-    def check_contents(self):
-        # check if shelf bin is empty or its space to shelve items, check weight of items
+    def remove_item(self):
         pass
 
-    def take_item(self):
-        # ake item form bin and update weight and space left in the bin
-        pass
-
-    def add_item(self):
-        pass
-
-    def display_items(self):
-        # for visualization
-        pass
+    def add_item(self, item:Item):
+        self.contents[0][0].content.append(item)
+        return self.contents[0][0].content
 
     def get_status(self) -> dict:
-        return {"id": self.id, "current_location": self.current_location, "available": self.available, "rows": self.rows_number, "cols": self.columns_number}
+        return {
+            # "id": self.id,
+            "rows": self.rows_number,
+            "cols": self.columns_number,
+            "current_location": self.current_location,
+            "available": self.available,
+            "contents": self.contents
+
+        }
 
     def __repr__(self):
+        # todo change to id
         return self.__class__.__name__
