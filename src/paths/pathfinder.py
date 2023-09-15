@@ -36,7 +36,7 @@ class Pathfinder:
             closed_list.append(current)
             neighbours = self.generate_neighbours(current.coordinates)
 
-            # todo if blocked
+            # todo if blocked to refactor
             if all(isinstance(neighbour.content, Robot) for neighbour in neighbours):
                 print("cant move, waiting....")
                 # move to the end of available robots list? or sleep
@@ -126,12 +126,12 @@ class Pathfinder:
         return None
 
     def generate_neighbours(self, starting_location) -> list[Location]:
+        # todo to refactoring
         neighbours = []
         for i in Neighbours:
             x = starting_location[0] + i.value[0]
             y = starting_location[1] + i.value[1]
 
-            # Check if the coordinates are within the floor's bounds
             if 0 <= x < len(self.floor) and 0 <= y < len(self.floor[0]):
                 neighbours.append(self.floor[x][y])
         return neighbours
