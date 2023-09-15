@@ -2,8 +2,10 @@ import uuid
 
 from pydantic import PositiveInt
 
+from src.config.directions import Directions
 from src.shelves.bin import Bin
 from src.items import Item
+from src.shelves.side import Side
 
 MAX_ROWS = 10
 MAX_COLUMNS = 6
@@ -18,31 +20,30 @@ class Shelve:
         self.columns_number = columns_number
         self.rows_number = rows_number
         self.bin_size = SHELVE_WIDTH / self.columns_number
-        self.generate_shelf = self.__create_grid()
+        self.generate_shelf = self.__create_shelve()
         self.current_location = None
         self.available = None
-        self.contents = None
+        self.content = None
 
-    def __create_grid(self) -> list[list[Bin]]:
+    def __create_shelve(self) -> list[Side]:
         """Creates shelve with 4 identical sides"""
-        side = [
-            Bin(row, col, self.bin_size) for col in range(self.rows_number)
-            for row in range(self.columns_number)
+        bins = [
+            Bin(self.bin_size) for _ in range(self.rows_number * self.columns_number)
         ]
-        return [side for _ in range(4)]
+        return [Side(bins, direction) for direction in Directions]
 
+    def add_item(self, item: Item, side: Directions, bin_index: int) -> None:
+        shelve_side = next(direction for direction in self.generate_shelf if direction.side_direction == side)
+        shelve_side.add_item(item, bin_index)
+
+    def remove_item(self, item: Item, side: Directions, bin_index: int) -> None:
+        shelve_side = next(_ for _ in self.generate_shelf if _.side_direction == side)
+        shelve_side.remove_item(item, bin_index)
 
     def generate(self):
         self.available = True
-        self.contents = self.generate_shelf
+        self.content = self.generate_shelf
         return self
-
-    def remove_item(self):
-        pass
-
-    def add_item(self, item:Item):
-        self.contents[0][0].content.append(item)
-        return self.contents[0][0].content
 
     def get_status(self) -> dict:
         return {
@@ -51,8 +52,8 @@ class Shelve:
             "cols": self.columns_number,
             "current_location": self.current_location,
             "available": self.available,
-            "contents": self.contents
-
+            "bin_size": self.bin_size,
+            "contents": self.content,
         }
 
     def __repr__(self):
