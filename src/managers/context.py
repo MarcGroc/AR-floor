@@ -2,14 +2,13 @@ from random import randrange, choice
 
 from src.floor.layout import ARFloorLayout
 from src.floor.location import Location
-from src.items.Item import Item
 from src.paths.pathfinder import Pathfinder
 from src.robots.robot import Robot
 from src.shelves.shelve import Shelve
 from src.config.states import FloorLocationStates
 
 
-# todo typing to refcartoring
+# todo split Manager into dedicated managers(paths,layout,items)
 class MainManager:
     def __init__(self) -> None:
         self.layout = ARFloorLayout()
@@ -23,6 +22,7 @@ class MainManager:
         self.available_shelves = self.get_available_shelves()
         self.workstations_picking = self.get_all_workstations_picking()
         self.workstations_stowing = self.get_all_workstations_stowing()
+        self.charging_stations = self.get_available_charging_stations()
         self.pathfinder = Pathfinder
 
     def _set_shelves(self) -> list[list[Location]]:
@@ -77,11 +77,20 @@ class MainManager:
             if location.purpose == FloorLocationStates.STOWING
         ]
 
+    def get_available_charging_stations(self):
+        return [
+            location.coordinates
+            for row in self.floor
+            for location in row
+            if location.purpose == FloorLocationStates.CHARGING
+        ]
+
     @property
     def robots_amount(self) -> int:
         return len(self.all_robots)
 
     def get_available_robots(self) -> list[Robot]:
+        # todo remove from list if cant move
         return [robot for robot in self.all_robots if robot.available is True]
 
     def get_available_shelves(self) -> list[Shelve]:
@@ -110,7 +119,10 @@ class MainManager:
     def get_shelve_path(self) -> Robot:
         """Returns Robot with shelve on it"""
         shelve_location = self.get_shelve_location()
-        robot = self.available_robots[0]  # hardcoded for now
+        robot = self.all_robots[0]  # todo hardcoded for now
+        if robot.battery_level < 15:
+            self.get_path_to_charging_station(robot)
+        self.floor[robot.current_location[0]][robot.current_location[1]].content = None
         path_to_shelve = self.pathfinder(
             self.floor, robot.current_location, shelve_location
         ).a_star_to_shelve()
@@ -132,6 +144,10 @@ class MainManager:
     def get_workstation_path(self):
         workstation_location = choice(self.workstations_stowing)  # hardcoded for now
         robot = self.get_shelve_path()
+
+        if robot.battery_level < 15:
+            self.get_path_to_charging_station(robot)
+
         path_to_path = self.pathfinder(
             self.floor, robot.current_location, workstation_location
         ).a_star_to_nearest_on_path_location()
@@ -145,16 +161,47 @@ class MainManager:
         robot.drive()
         robot.target_location = None
         robot.taken_shelve.current_location = robot.current_location
+        if robot.battery_level < 20:
+            self.get_path_to_empty_location()
+            self.get_path_to_charging_station(robot)
         return robot
 
-    def send_to_charging_station(self):
-        pass
+    def get_path_to_empty_location(self):
+        target_location = self.get_not_taken_location()[0]
+        robot = self.get_shelve_path()
+        path_to_empty_location = self.pathfinder(
+            self.floor, robot.current_location, target_location
+        ).a_star_to_workstation()
+        robot.path = path_to_empty_location
+        robot.drive()
+        return robot
+
+    def get_path_to_charging_station(self, robot: Robot):
+        charging_station = self.get_available_charging_stations()[0]
+        path_to_charging_station = self.pathfinder(
+            self.floor, robot.current_location, charging_station
+        ).a_star_to_shelve()
+        robot.path = path_to_charging_station
+        robot.drive()
+        robot.battery_level = 100
+        return robot
 
     def __repr__(self):
         return "\n".join(" ".join(str(cell) for cell in row) for row in self.floor)
 
 
-i = Item(10, 10, 10, 10, "Item-1")
 a = MainManager()
-a.available_shelves[0].add_item(i)
-print(a.available_shelves[0].contents[0][0].content)
+# i = Item(10, 10, 10, 10, "Item-12345")
+# a.available_shelves[0].add_item(i, Directions.EAST, 1)
+# print(a.available_shelves[0].get_status())
+# print(a.available_shelves[0].content[0].get_status())
+# print(len(a.available_shelves[0].content[0].content))
+# print(a.available_shelves[0].content[0].content[1].get_status())
+# print(a)
+# print(a.get_workstation_path().current_location)
+# print(a.all_robots[0].battery_level)
+# print(a.get_path_to_empty_location().current_location)
+# print(a.get_path_to_charging_station(a.get_path_to_empty_location()))
+# print(a.all_robots[0].current_location)
+# print(a.all_robots[0].battery_level)
+print(a.floor[0][6].heading)
