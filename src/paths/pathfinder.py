@@ -128,9 +128,9 @@ class Pathfinder:
     def generate_neighbours(self, starting_location) -> list[Location]:
         # todo to refactoring
         neighbours = []
-        for i in Neighbours:
-            x = starting_location[0] + i.value[0]
-            y = starting_location[1] + i.value[1]
+        for neighbour in Neighbours:
+            x = starting_location[0] + neighbour.value[0]
+            y = starting_location[1] + neighbour.value[1]
 
             if 0 <= x < len(self.floor) and 0 <= y < len(self.floor[0]):
                 neighbours.append(self.floor[x][y])

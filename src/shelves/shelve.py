@@ -16,7 +16,7 @@ class Shelve:
     def __init__(self, columns_number: PositiveInt, rows_number: PositiveInt) -> None:
         self.id = uuid.uuid4()
         if columns_number > MAX_COLUMNS or rows_number > MAX_ROWS:
-            raise "Invalid dimensions for the shelf"
+            raise ValueError("Invalid dimensions for the shelf")
         self.columns_number = columns_number
         self.rows_number = rows_number
         self.bin_size = SHELVE_WIDTH / self.columns_number
@@ -53,9 +53,8 @@ class Shelve:
             "current_location": self.current_location,
             "available": self.available,
             "bin_size": self.bin_size,
-            "contents": self.content,
+            "content": self.content,
         }
 
     def __repr__(self):
-        # todo change to id
         return self.__class__.__name__

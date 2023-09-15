@@ -1,13 +1,12 @@
 import uuid
 
 from src.config.directions import Directions
-from src.config.states import FloorLocationStates
-from src.floor.location import Location
+from src.items.Item import Item
 
 
 class Robot:
     def __init__(self) -> None:
-        self.__id = uuid.uuid4()
+        self._id = uuid.uuid4()
         self.current_location = []
         self.battery_level = 100
         self.available = None
@@ -44,19 +43,23 @@ class Robot:
             self.battery_level -= 0.1
         self.battery_level -= 0.5
 
-    def rotate_shelve(self):
-        current_location = Location(
-            self.current_location[0], [self.current_location[1]]
-        )
-        workstation_direction = Location(
-            self.target_location[0], self.target_location[1]
-        ).heading
-        shelf_side = self.taken_shelve.content
+    def rotate_shelve(self, item: Item, workstation_side):
+        if self.taken_shelve is None:
+            return None
 
-        if current_location.purpose == FloorLocationStates.WAITING:
-            # todo: need to assign directions to work stations
-            #  eg. if work station has direction N and robot has opposite then robot can rotate shelf accordingly
-            pass
+        for side in self.taken_shelve.content:
+            for bin_index, bin in enumerate(side.content):
+                if item in bin.content:
+                    item_side_direction = side.side_direction
+                    if workstation_side == item_side_direction:
+                        print(f"No need to rotate")
+                        continue
+                    else:
+                        side.side_direction = workstation_side
+                        print(
+                            f"Rotate shelf from {item_side_direction} to {workstation_side}"
+                        )
+                    return 1
 
     def generate(self):
         self.available = True
@@ -65,7 +68,7 @@ class Robot:
 
     def get_status(self):
         return {
-            # "id": self.__id,
+            "id": self._id,
             "available": self.available,
             "current_location": self.current_location,
             "heading": self.heading,

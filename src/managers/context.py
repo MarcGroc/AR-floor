@@ -1,7 +1,9 @@
 from random import randrange, choice
 
+from src.config.directions import Directions
 from src.floor.layout import ARFloorLayout
 from src.floor.location import Location
+from src.items.Item import Item
 from src.paths.pathfinder import Pathfinder
 from src.robots.robot import Robot
 from src.shelves.shelve import Shelve
@@ -191,17 +193,8 @@ class MainManager:
 
 
 a = MainManager()
-# i = Item(10, 10, 10, 10, "Item-12345")
-# a.available_shelves[0].add_item(i, Directions.EAST, 1)
-# print(a.available_shelves[0].get_status())
-# print(a.available_shelves[0].content[0].get_status())
-# print(len(a.available_shelves[0].content[0].content))
-# print(a.available_shelves[0].content[0].content[1].get_status())
-# print(a)
-# print(a.get_workstation_path().current_location)
-# print(a.all_robots[0].battery_level)
-# print(a.get_path_to_empty_location().current_location)
-# print(a.get_path_to_charging_station(a.get_path_to_empty_location()))
-# print(a.all_robots[0].current_location)
-# print(a.all_robots[0].battery_level)
-print(a.floor[0][6].heading)
+item = Item(10,10,10,10,"item")
+s = a.get_workstation_path()
+s.taken_shelve.add_item(item, Directions.NORTH, 0)
+x = a.floor[s.current_location[0]][s.current_location[1]].heading
+s.rotate_shelve(item, x)

@@ -3,7 +3,9 @@ from uuid import uuid4
 
 class Bin:
     def __init__(self, size) -> None:
-        self.__id = uuid4()
+        if size <= 0:
+            raise ValueError("Size must be greater than zero.")
+        self.id = uuid4()
         self.width = size
         self.length = self.width
         self.height = self.width
