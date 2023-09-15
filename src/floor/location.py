@@ -20,12 +20,12 @@ class Location:
     def __eq__(self, other):
         return self.coordinates == other.coordinates
 
+    def __repr__(self):
+        return str(self.purpose.value)
+
     def get_status(self) -> dict:
         return {
             "coordinates": self.coordinates,
             "purpose": self.purpose,
             "content": self.content,
         }
-
-    def __repr__(self):
-        return str(self.purpose)
