@@ -1,22 +1,31 @@
+import logging
 import uuid
+from typing import Optional
 
 from src.config.directions import Directions
 from src.items.Item import Item
+from src.shelves.shelve import Shelve
+
+INITIAL_BATTERY_LEVEL = 100
 
 
 class Robot:
     def __init__(self) -> None:
-        self._id = uuid.uuid4()
-        self.current_location = []
-        self.battery_level = 100
-        self.available = None
-        self.heading = None
-        self.path = []
-        self.target_location = []
-        self.taken_shelve = None
+        self._id: uuid.UUID = uuid.uuid4()
+        self.current_location: list[int, int] = []
+        self.battery_level: int = INITIAL_BATTERY_LEVEL
+        self.available: bool = None
+        self.heading: Directions = None
+        self.path: list[list[int, int]] = []
+        self.target_location: list[int, int] = []
+        self.taken_shelve: Optional[Shelve] = None
 
     def drive(self):
         self.available = False
+        if not self.path:
+            logging.error(f"Path is empty {self.path}")
+            return
+
         self.target_location = self.path[-1]
 
         while self.current_location != self.target_location:
@@ -27,18 +36,20 @@ class Robot:
     def turn(self):
         if self.path[0][0] == self.current_location[0] - 1:
             self.heading = Directions.NORTH
-            self.battery_status()
+            self.update_battery()
         elif self.path[0][0] == self.current_location[0] + 1:
             self.heading = Directions.SOUTH
-            self.battery_status()
+            self.update_battery()
         elif self.path[0][1] == self.current_location[1] + 1:
             self.heading = Directions.EAST
-            self.battery_status()
+            self.update_battery()
         elif self.path[0][1] == self.current_location[1] - 1:
             self.heading = Directions.WEST
-            self.battery_status()
+            self.update_battery()
+        else:
+            raise ValueError("Invalid next_location")
 
-    def battery_status(self):
+    def update_battery(self):
         if self.taken_shelve is None:
             self.battery_level -= 0.1
         self.battery_level -= 0.5
@@ -61,7 +72,7 @@ class Robot:
                         )
                     return 1
 
-    def generate(self):
+    def initialize(self):
         self.available = True
         self.heading = Directions.NORTH
         return self

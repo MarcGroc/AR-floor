@@ -1,19 +1,19 @@
 from random import randrange, choice
 
 from src.config.directions import Directions
-from src.floor.layout import ARFloorLayout
+from src.floor.layout import FloorLayout
 from src.floor.location import Location
 from src.items.Item import Item
 from src.paths.pathfinder import Pathfinder
-from src.robots.robot import Robot
+from src.robots.robot import Robot, INITIAL_BATTERY_LEVEL
 from src.shelves.shelve import Shelve
-from src.config.states import FloorLocationStates
+from src.config.states import LocationStates
 
 
 # todo split Manager into dedicated managers(paths,layout,items)
 class MainManager:
     def __init__(self) -> None:
-        self.layout = ARFloorLayout()
+        self.layout = FloorLayout()
         self.robot = Robot
         self.shelve = Shelve
         self.all_shelves = []
@@ -28,16 +28,16 @@ class MainManager:
         self.pathfinder = Pathfinder
 
     def _set_shelves(self) -> list[list[Location]]:
-        floor = self.layout.generate
+        floor = self.layout.floor_layout
         for row in floor:
             # antipattern refactoring
             for cell, location in enumerate(row):
                 if location is None:
                     continue
-                if location.purpose == FloorLocationStates.STORING:
+                if location.purpose == LocationStates.STORING:
                     new_shelve = self.shelve(
                         randrange(1, 6), randrange(1, 10)
-                    ).generate()
+                    ).initialize()
                     location.content = new_shelve
                     location.content.current_location = location.coordinates
                     self.all_shelves.append(new_shelve)
@@ -47,8 +47,8 @@ class MainManager:
         floor = self._set_shelves()
         for row in floor:
             for cell, location in enumerate(row):
-                if location.purpose == FloorLocationStates.CHARGING:
-                    new_robot = self.robot().generate()
+                if location.purpose == LocationStates.CHARGING:
+                    new_robot = self.robot().initialize()
                     row[cell].content = new_robot
                     row[cell].content.current_location = row[cell].coordinates
                     self.all_robots.append(new_robot)
@@ -68,7 +68,7 @@ class MainManager:
             location.coordinates
             for row in self.floor
             for location in row
-            if location.purpose == FloorLocationStates.PICKING
+            if location.purpose == LocationStates.PICKING
         ]
 
     def get_all_workstations_stowing(self):
@@ -76,7 +76,7 @@ class MainManager:
             location.coordinates
             for row in self.floor
             for location in row
-            if location.purpose == FloorLocationStates.STOWING
+            if location.purpose == LocationStates.STOWING
         ]
 
     def get_available_charging_stations(self):
@@ -84,7 +84,7 @@ class MainManager:
             location.coordinates
             for row in self.floor
             for location in row
-            if location.purpose == FloorLocationStates.CHARGING
+            if location.purpose == LocationStates.CHARGING
         ]
 
     @property
@@ -106,8 +106,8 @@ class MainManager:
             location.coordinates
             for row in self.floor
             for location in row
-            if location.purpose == FloorLocationStates.STORING
-            and location.content is None
+            if location.purpose == LocationStates.STORING
+               and location.content is None
         ]
 
     def get_workstations_locations(self):
@@ -115,7 +115,7 @@ class MainManager:
             location.coordinates
             for row in self.floor
             for location in row
-            if location.purpose == FloorLocationStates.PICKING
+            if location.purpose == LocationStates.PICKING
         ]
 
     def get_shelve_path(self) -> Robot:
@@ -185,7 +185,7 @@ class MainManager:
         ).a_star_to_shelve()
         robot.path = path_to_charging_station
         robot.drive()
-        robot.battery_level = 100
+        robot.battery_level = INITIAL_BATTERY_LEVEL
         return robot
 
     def __repr__(self):
@@ -194,7 +194,10 @@ class MainManager:
 
 a = MainManager()
 item = Item(10,10,10,10,"item")
-s = a.get_workstation_path()
-s.taken_shelve.add_item(item, Directions.NORTH, 0)
-x = a.floor[s.current_location[0]][s.current_location[1]].heading
-s.rotate_shelve(item, x)
+print(a.workstations_picking)
+# s = a.get_workstation_path()
+# s.taken_shelve.add_item(item, Directions.NORTH, 0)
+# x = a.floor[s.current_location[0]][s.current_location[1]].heading
+# s.rotate_shelve(item, x)
+# print(s.current_location)
+print(a)

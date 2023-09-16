@@ -1,3 +1,4 @@
+import uuid
 from uuid import uuid4
 
 
@@ -8,7 +9,7 @@ from src.shelves.bin import Bin
 
 class Side:
     def __init__(self, bins: list[Bin], direction: Directions) -> None:
-        self.__id = uuid4()
+        self.id: uuid.UUID = uuid4()
         self.content = bins
         self.side_direction = direction
 

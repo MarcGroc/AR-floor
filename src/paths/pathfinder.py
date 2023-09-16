@@ -1,4 +1,4 @@
-from src.config.states import FloorLocationStates
+from src.config.states import LocationStates
 from src.floor.location import Location
 from src.robots.robot import Robot
 from src.config.neighbours import Neighbours
@@ -68,7 +68,7 @@ class Pathfinder:
 
         while len(open_list) > 0:
             current = min(open_list, key=lambda node: node.f_value)
-            if current.purpose == FloorLocationStates.ON_PATH:
+            if current.purpose == LocationStates.ON_PATH:
                 return self.get_path(current)
 
             open_list.remove(current)

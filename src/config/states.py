@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class FloorLocationStates(Enum):
+class LocationStates(Enum):
 
     NOT_TAKEN = 0
     TAKEN = 1
