@@ -84,6 +84,7 @@ class FloorLayout:
         )
 
     def __set_cells_for_picking_and_stowing(self) -> None:
+        # todo not working
         for cell in range(6, self.__x_axis - 4, 8):
             self.__set_cells_purpose(0, 1, cell, cell + 1, LocationStates.PICKING, Directions.NORTH)
             self.__set_cells_purpose(-1, None, cell, cell + 1, LocationStates.PICKING, Directions.SOUTH)
