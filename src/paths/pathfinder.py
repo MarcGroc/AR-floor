@@ -1,4 +1,3 @@
-from src.config.states import LocationStates
 from src.floor.location import Location
 from src.robots.robot import Robot
 from src.config.neighbours import Neighbours
@@ -7,139 +6,95 @@ from src.shelves.shelve import Shelve
 COST = 1
 
 
+class BlockedCantMove(Exception):
+    pass
+
+
 class Pathfinder:
     """A* algorith implementation"""
 
-    def __init__(self, floor, starting_location, target_location) -> None:
+    def __init__(
+        self,
+        floor: list[list[Location]],
+        starting_location: list[int, int],
+        target_location: list[int, int],
+    ) -> None:
         self.floor = floor
         self.starting_location = starting_location
         self.target_location = target_location
 
         # A* algorithm implementation
-        self.neighbours = self.generate_neighbours(self.starting_location)
         self.start = Location(starting_location[0], starting_location[1])
         self.end = Location(target_location[0], target_location[1])
 
-    def a_star_to_shelve(self) -> list[list[int, int]] | None:
-        self.start.f_value = self.start.g_value + self.get_manhattan_distance(
-            self.start, self.end
-        )
-        open_list = [self.start]
-        closed_list = []
+    def find_path(self, obstacle_type) -> list[list[int, int]] | Exception:
+        self.start.f_value = self.calculate_f_value(self.start, self.end)
+        open_list, closed_list = [self.start], []
 
         while len(open_list) > 0:
             current = min(open_list, key=lambda node: node.f_value)
             if current.coordinates == self.end.coordinates:
                 return self.get_path(current)
 
-            open_list.remove(current)
-            closed_list.append(current)
-            neighbours = self.generate_neighbours(current.coordinates)
+            self.process_node(current, open_list, closed_list, obstacle_type)
 
-            # todo if blocked to refactor
-            if all(isinstance(neighbour.content, Robot) for neighbour in neighbours):
-                print("cant move, waiting....")
-                # move to the end of available robots list? or sleep
-                return None
+        # raise BlockedCantMove("Blocked cant move")
 
-            for neighbour in neighbours:
-                if neighbour in closed_list or isinstance(neighbour.content, Robot):
-                    continue
+    def get_path_no_load(self) -> list[list[int, int]] | bool:
+        return self.find_path(obstacle_type=(Robot,))
 
-                temp_g_value = neighbour.g_value + COST
+    def get_path_with_load(self) -> list[list[int, int]] | bool:
+        return self.find_path(obstacle_type=(Robot, Shelve))
 
-                if neighbour not in open_list:
-                    open_list.append(neighbour)
-                elif temp_g_value >= neighbour.g_value:
-                    continue
-                neighbour.parent = current
-                neighbour.g_value = temp_g_value
-                neighbour.f_value = neighbour.g_value + self.get_manhattan_distance(
-                    neighbour, self.end
-                )
-        return None
+    def process_node(
+        self, current, open_list, closed_list, obstacle_type=(Robot,)
+    ) -> None | bool:
+        open_list.remove(current)
+        closed_list.append(current)
+        neighbours = self.generate_neighbours(current.coordinates)
+        if self.check_for_blockage(neighbours):
+            return False
+        for neighbour in neighbours:
+            if neighbour in closed_list or isinstance(neighbour.content, obstacle_type):
+                continue
 
-    def a_star_to_nearest_on_path_location(self):
-        self.start.f_value = self.start.g_value + self.get_manhattan_distance(
-            self.start, self.end
-        )
-        open_list = [self.start]
-        closed_list = []
+            temp_g_value = neighbour.g_value + COST
 
-        while len(open_list) > 0:
-            current = min(open_list, key=lambda node: node.f_value)
-            if current.purpose == LocationStates.ON_PATH:
-                return self.get_path(current)
+            if neighbour not in open_list:
+                open_list.append(neighbour)
+            elif temp_g_value >= neighbour.g_value:
+                continue
+            self.update_node(neighbour, current, temp_g_value)
 
-            open_list.remove(current)
-            closed_list.append(current)
-            neighbours = self.generate_neighbours(current.coordinates)
+    def check_for_blockage(self, neighbours):
+        if all(isinstance(neighbour.content, Robot) for neighbour in neighbours):
+            return True
+        if all(isinstance(neighbour.content, Shelve) for neighbour in neighbours):
+            return True
+        return False
 
-            for neighbour in neighbours:
-                if neighbour in closed_list or isinstance(neighbour.content, Robot):
-                    continue
+    def update_node(self, node, parent, temp_g_value) -> None:
+        node.parent = parent
+        node.g_value = temp_g_value
+        node.f_value = node.g_value + self.get_manhattan_distance(node, self.end)
 
-                temp_g_value = neighbour.g_value + COST
-
-                if neighbour not in open_list:
-                    open_list.append(neighbour)
-                elif temp_g_value >= neighbour.g_value:
-                    continue
-                neighbour.parent = current
-                neighbour.g_value = temp_g_value
-                neighbour.f_value = neighbour.g_value + self.get_manhattan_distance(
-                    neighbour, self.end
-                )
-        return None
-
-    def a_star_to_workstation(self) -> list[list[int, int]] | None:
-        self.start.f_value = self.start.g_value + self.get_manhattan_distance(
-            self.start, self.end
-        )
-        open_list = [self.start]
-        closed_list = []
-
-        while len(open_list) > 0:
-            current = min(open_list, key=lambda node: node.f_value)
-            if current.coordinates == self.end.coordinates:
-                return self.get_path(current)
-
-            open_list.remove(current)
-            closed_list.append(current)
-            neighbours = self.generate_neighbours(current.coordinates)
-
-            for neighbour in neighbours:
-                if neighbour in closed_list or neighbour.content in [Robot, Shelve]:
-                    continue
-
-                temp_g_value = neighbour.g_value + COST
-
-                if neighbour not in open_list:
-                    open_list.append(neighbour)
-                elif temp_g_value >= neighbour.g_value:
-                    continue
-                neighbour.parent = current
-                neighbour.g_value = temp_g_value
-                neighbour.f_value = neighbour.g_value + self.get_manhattan_distance(
-                    neighbour, self.end
-                )
-        return None
+    def calculate_f_value(self, start, end) -> int:
+        return start.g_value + self.get_manhattan_distance(start, end)
 
     def generate_neighbours(self, starting_location) -> list[Location]:
-        # todo to refactoring
-        neighbours = []
-        for neighbour in Neighbours:
-            x = starting_location[0] + neighbour.value[0]
-            y = starting_location[1] + neighbour.value[1]
-
-            if 0 <= x < len(self.floor) and 0 <= y < len(self.floor[0]):
-                neighbours.append(self.floor[x][y])
-        return neighbours
+        return [
+            self.floor[starting_location[0] + neighbour.value[0]][
+                starting_location[1] + neighbour.value[1]
+            ]
+            for neighbour in Neighbours
+            if 0 <= starting_location[0] + neighbour.value[0] < len(self.floor)
+            and 0 <= starting_location[1] + neighbour.value[1] < len(self.floor[0])
+        ]
 
     def get_manhattan_distance(self, start, end) -> int:
-        x = abs(start.coordinates[0] - end.coordinates[0])
-        y = abs(start.coordinates[1] - end.coordinates[1])
-        return x + y
+        return abs(start.coordinates[0] - end.coordinates[0]) + abs(
+            start.coordinates[1] - end.coordinates[1]
+        )
 
     def get_path(self, current) -> list[list[int, int]]:
         path = []

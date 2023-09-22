@@ -9,11 +9,13 @@ from src.robots.robot import Robot, INITIAL_BATTERY_LEVEL
 from src.shelves.shelve import Shelve
 from src.config.states import LocationStates
 
+FLOOR_DIMENSION = 30
+
 
 # todo split Manager into dedicated managers(paths,layout,items)
 class MainManager:
     def __init__(self) -> None:
-        self.layout = FloorLayout()
+        self.layout = FloorLayout(FLOOR_DIMENSION)
         self.robot = Robot
         self.shelve = Shelve
         self.all_shelves = []
@@ -30,7 +32,7 @@ class MainManager:
     def _set_shelves(self) -> list[list[Location]]:
         floor = self.layout.floor_layout
         for row in floor:
-            # antipattern refactoring
+            # todo antipattern refactoring
             for cell, location in enumerate(row):
                 if location is None:
                     continue
@@ -92,7 +94,6 @@ class MainManager:
         return len(self.all_robots)
 
     def get_available_robots(self) -> list[Robot]:
-        # todo remove from list if cant move
         return [robot for robot in self.all_robots if robot.available is True]
 
     def get_available_shelves(self) -> list[Shelve]:
@@ -106,8 +107,7 @@ class MainManager:
             location.coordinates
             for row in self.floor
             for location in row
-            if location.purpose == LocationStates.STORING
-               and location.content is None
+            if location.purpose == LocationStates.STORING and location.content is None
         ]
 
     def get_workstations_locations(self):
@@ -121,14 +121,24 @@ class MainManager:
     def get_shelve_path(self) -> Robot:
         """Returns Robot with shelve on it"""
         shelve_location = self.get_shelve_location()
-        robot = self.all_robots[0]  # todo hardcoded for now
+        robot = self.available_robots[0]
         if robot.battery_level < 15:
             self.get_path_to_charging_station(robot)
         self.floor[robot.current_location[0]][robot.current_location[1]].content = None
+        # try:
+        # path_to_shelve = self.pathfinder(
+        # self.floor, robot.current_location, shelve_location
+        # ).get_path_no_load()
+        # except Blockedby(robot, shelve):
+        # shelve_location.available = False
+        # shelve_location = self.get_shelve_location()
+
         path_to_shelve = self.pathfinder(
             self.floor, robot.current_location, shelve_location
-        ).a_star_to_shelve()
+        ).get_path_no_load()
         robot.path = path_to_shelve
+        print(f"----{robot.path}----path to shelve")
+        print(robot.current_location)
         robot.drive()
         if robot.current_location == shelve_location:
             self.floor[shelve_location[0]][shelve_location[1]].content.available = False
@@ -150,17 +160,13 @@ class MainManager:
         if robot.battery_level < 15:
             self.get_path_to_charging_station(robot)
 
-        path_to_path = self.pathfinder(
-            self.floor, robot.current_location, workstation_location
-        ).a_star_to_nearest_on_path_location()
-        robot.path = path_to_path
-        robot.drive()
-
         path_to_workstation = self.pathfinder(
             self.floor, robot.current_location, workstation_location
-        ).a_star_to_workstation()
+        ).get_path_with_load()
         robot.path = path_to_workstation
+        print(f"----{robot.path}----path to workstation")
         robot.drive()
+        print(robot.current_location)
         robot.target_location = None
         robot.taken_shelve.current_location = robot.current_location
         if robot.battery_level < 20:
@@ -173,7 +179,7 @@ class MainManager:
         robot = self.get_shelve_path()
         path_to_empty_location = self.pathfinder(
             self.floor, robot.current_location, target_location
-        ).a_star_to_workstation()
+        ).get_path_with_load()
         robot.path = path_to_empty_location
         robot.drive()
         return robot
@@ -182,7 +188,7 @@ class MainManager:
         charging_station = self.get_available_charging_stations()[0]
         path_to_charging_station = self.pathfinder(
             self.floor, robot.current_location, charging_station
-        ).a_star_to_shelve()
+        ).get_path_no_load()
         robot.path = path_to_charging_station
         robot.drive()
         robot.battery_level = INITIAL_BATTERY_LEVEL
@@ -193,11 +199,5 @@ class MainManager:
 
 
 a = MainManager()
-item = Item(10,10,10,10,"item")
-print(a.workstations_picking)
-# s = a.get_workstation_path()
-# s.taken_shelve.add_item(item, Directions.NORTH, 0)
-# x = a.floor[s.current_location[0]][s.current_location[1]].heading
-# s.rotate_shelve(item, x)
-# print(s.current_location)
-print(a)
+s = a.get_workstation_path()
+print(s.current_location)
