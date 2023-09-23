@@ -27,7 +27,7 @@ class Pathfinder:
         self.start = Location(starting_location[0], starting_location[1])
         self.end = Location(target_location[0], target_location[1])
 
-    def find_path(self, obstacle_type) -> list[list[int, int]] | Exception:
+    def get_path_no_load(self) -> list[list[int, int]] | None:
         self.start.f_value = self.calculate_f_value(self.start, self.end)
         open_list, closed_list = [self.start], []
 
@@ -36,15 +36,25 @@ class Pathfinder:
             if current.coordinates == self.end.coordinates:
                 return self.get_path(current)
 
-            self.process_node(current, open_list, closed_list, obstacle_type)
+            self.process_node(current, open_list, closed_list, obstacle_type=(Robot,))
 
-        # raise BlockedCantMove("Blocked cant move")
+        return None
 
-    def get_path_no_load(self) -> list[list[int, int]] | bool:
-        return self.find_path(obstacle_type=(Robot,))
+    def get_path_with_load(self) -> list[list[int, int]] | None:
+        self.start.f_value = self.calculate_f_value(self.start, self.end)
+        open_list, closed_list = [self.start], []
 
-    def get_path_with_load(self) -> list[list[int, int]] | bool:
-        return self.find_path(obstacle_type=(Robot, Shelve))
+        while len(open_list) > 0:
+            current = min(open_list, key=lambda node: node.f_value)
+            if current.coordinates == self.end.coordinates:
+                return self.get_path(current)
+
+            self.process_node(
+                current, open_list, closed_list, obstacle_type=(Robot, Shelve)
+            )
+
+        return None
+
 
     def process_node(
         self, current, open_list, closed_list, obstacle_type=(Robot,)
@@ -52,8 +62,7 @@ class Pathfinder:
         open_list.remove(current)
         closed_list.append(current)
         neighbours = self.generate_neighbours(current.coordinates)
-        if self.check_for_blockage(neighbours):
-            return False
+        # self.check_for_blockage(neighbours)
         for neighbour in neighbours:
             if neighbour in closed_list or isinstance(neighbour.content, obstacle_type):
                 continue
@@ -67,11 +76,26 @@ class Pathfinder:
             self.update_node(neighbour, current, temp_g_value)
 
     def check_for_blockage(self, neighbours):
-        if all(isinstance(neighbour.content, Robot) for neighbour in neighbours):
-            return True
-        if all(isinstance(neighbour.content, Shelve) for neighbour in neighbours):
-            return True
-        return False
+        count_robot = 0
+        count_shelve = 0
+        count_empty = 0
+
+        for neighbour in neighbours:
+            if isinstance(neighbour.content, Robot):
+                count_robot += 1
+            elif isinstance(neighbour.content, Shelve):
+                count_shelve += 1
+            else:
+                count_empty += 1
+
+        if count_robot == len(neighbours):
+            print("Blocked by robots")
+            # raise BlockedCantMove("Blocked by robots")
+        elif count_shelve == len(neighbours):
+            print("Blocked by shelves")
+            # raise BlockedCantMove("Blocked by shelves")
+
+        return 1
 
     def update_node(self, node, parent, temp_g_value) -> None:
         node.parent = parent

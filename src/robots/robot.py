@@ -6,14 +6,15 @@ from src.config.directions import Directions
 from src.items.Item import Item
 from src.shelves.shelve import Shelve
 
-INITIAL_BATTERY_LEVEL = 100
-
+FULL_BATTERY_LEVEL = 100
+LOW_BATTERY_LEVEL = 20
+CRITICAL_BATTERY_LEVEL = 15
 
 class Robot:
     def __init__(self) -> None:
         self._id: uuid.UUID = uuid.uuid4()
         self.current_location: list[int, int] = []
-        self.battery_level: int = INITIAL_BATTERY_LEVEL
+        self.battery_level: int = FULL_BATTERY_LEVEL
         self.available: bool = None
         self.heading: Directions = None
         self.path: list[list[int, int]] = []
