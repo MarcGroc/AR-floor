@@ -2,8 +2,8 @@ from src.managers.main import MainManager
 
 
 def main():
-    a = MainManager()
-    a.work()
+    manager = MainManager()
+    manager.work()
 
 
 if __name__ == "__main__":

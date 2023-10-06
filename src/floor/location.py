@@ -13,7 +13,7 @@ class Location:
         col,
     ) -> None:
         self.id: uuid.UUID = uuid.uuid4()
-        self.coordinates: list[int,int] = [row, col]
+        self.coordinates: list[int, int] = [row, col]
         self.purpose: LocationStates = None
         self.content: Optional[Shelve, Robot, None] = None
 
@@ -27,7 +27,6 @@ class Location:
 
     def __repr__(self):
         return str(self.purpose.value)
-
 
     def get_status(self) -> dict:
         return {

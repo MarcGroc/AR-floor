@@ -46,7 +46,8 @@ class TestSide:
         test_side.remove_item(item, 0)
         assert item not in test_side.content[0].content
 
-    def test_add_item_too_large(self, item, test_side):
+    def test_add_item_too_large(self, test_side):
+        item = Item(51, 51, 51, 51, "Big-item")
         with pytest.raises(Exception):
             test_side.add_item(item, 0)
 
@@ -68,7 +69,7 @@ class TestShelve:
 
     @pytest.fixture
     def side(self):
-        return Directions.NORTH
+        return  Directions.NORTH
 
     @pytest.fixture
     def bin_index(self):
@@ -90,11 +91,12 @@ class TestShelve:
 
     def test_add_remove_item_to_bin_in_shelve(self, item, bin_index, side, shelve):
         shelve.add_item(item, side, bin_index)
-        assert len(shelve.content[0].content[0].content) == 1
-        assert shelve.content[0].content[0].content[0] == item
+        shelve_side = next(s for s in shelve.initialize_shelf if s.side_direction == side)
+        assert item in shelve_side.content[bin_index].content
 
         shelve.remove_item(item, side, bin_index)
-        assert len(shelve.content[0].content[0].content) == 0
+        assert item not in shelve_side.content[bin_index].content
+
 
     def test_add_item_to_bin_with_incorrect_size(self, side, bin_index, shelve):
         item = Item(51, 51, 51, 51, "Big-item")

@@ -3,6 +3,7 @@ from uuid import uuid4
 
 
 class Bin:
+    """ Represents a bin in shelf side """
     def __init__(self, size) -> None:
         if size <= 0:
             raise ValueError("Size must be greater than zero.")

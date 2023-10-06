@@ -4,7 +4,6 @@ from uuid import uuid4
 
 @dataclass
 class Item:
-    # id: uuid4()
     width: float
     length: float
     height: float

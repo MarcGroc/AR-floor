@@ -1,5 +1,6 @@
 import uuid
 
+from loguru import logger
 from pydantic import PositiveInt
 
 from src.config.directions import Directions
@@ -13,6 +14,7 @@ SHELVE_WIDTH = 100
 
 
 class Shelve:
+    """ Represents a shelve """
     def __init__(self, columns_number: PositiveInt, rows_number: PositiveInt) -> None:
         self.id: uuid.UUID = uuid.uuid4()
         self.columns_number = columns_number
@@ -20,7 +22,7 @@ class Shelve:
         self.__validate_dimensions()
         self.bin_size: float = SHELVE_WIDTH / self.columns_number
         self.initialize_shelf = self.__create_sides()
-        self.current_location  = None
+        self.current_location = None
         self.available = None
         self.content = None
 
@@ -38,16 +40,15 @@ class Shelve:
         return [Side(bins, direction) for direction in Directions]
 
     def add_item(self, item: Item, side: Directions, bin_index: int) -> None:
-        shelve_side = next(
-            direction
-            for direction in self.initialize_shelf
-            if direction.side_direction == side
-        )
+        shelve_side = next(_ for _ in self.initialize_shelf if _.side_direction == side)
         shelve_side.add_item(item, bin_index)
+        logger.info(f"Added item {item} to {side} bin {bin_index}")
+
 
     def remove_item(self, item: Item, side: Directions, bin_index: int) -> None:
         shelve_side = next(_ for _ in self.initialize_shelf if _.side_direction == side)
         shelve_side.remove_item(item, bin_index)
+        logger.info(f"Removed item {item} from {side} bin {bin_index}")
 
     def initialize(self):
         self.available = True

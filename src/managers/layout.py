@@ -1,3 +1,4 @@
+from loguru import logger
 from random import randrange
 
 from src.config.states import LocationStates
@@ -8,6 +9,7 @@ from src.shelves.shelve import Shelve
 
 
 class LayoutManager:
+    """ Layout Manager initializes floor layout, robots, shelves and holds information about them """
     def __init__(self, floor_dimension: int) -> None:
         self.__validate_dimension(floor_dimension)
         self.layout: FloorLayout = FloorLayout(floor_dimension)
@@ -88,7 +90,6 @@ class LayoutManager:
         for row in floor:
             for cell, location in enumerate(row):
                 self._init_shelve(location)
-
         return floor
 
     def _set_robots(self) -> list[list[Location]]:
@@ -105,4 +106,5 @@ class LayoutManager:
     def initialize(self) -> list[list[Location]]:
         self.floor = self._set_shelves()
         self.floor = self._set_robots()
+        logger.info("Floor initialized")
         return self.floor

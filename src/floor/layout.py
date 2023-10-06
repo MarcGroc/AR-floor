@@ -14,8 +14,9 @@ FIRST_STOWING_WORKSTATION = 10
 
 CHARGING_AREA_SIZE = 3
 
+
 class FloorLayout:
-    """Creates floor layout and assign Location to each field"""
+    """Creates floor layout and assign Location to each cell"""
 
     def __init__(self, dimension: PositiveInt) -> None:
         self._x_axis = dimension
@@ -243,7 +244,7 @@ class FloorLayout:
 
         # Aisles horizontal
         for row_start in range(
-            FloorAreas.FIRST_AISLE.value,
+            FloorAreas.STARTING_AISLE.value,
             self._x_axis - FloorAreas.INNER_FLOOR.value,
             FloorAreas.AISLE_GAP.value,
         ):
@@ -253,7 +254,7 @@ class FloorLayout:
 
         # Aisles vertical
         for col_start in range(
-            FloorAreas.FIRST_AISLE.value,
+            FloorAreas.STARTING_AISLE.value,
             self._y_axis - FloorAreas.INNER_FLOOR.value,
             FloorAreas.AISLE_GAP.value,
         ):

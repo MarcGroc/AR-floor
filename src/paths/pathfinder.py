@@ -1,3 +1,5 @@
+from loguru import logger
+
 from src.floor.location import Location
 from src.robots.robot import Robot
 from src.config.neighbours import Neighbours
@@ -55,10 +57,9 @@ class Pathfinder:
 
         return None
 
-
     def process_node(
         self, current, open_list, closed_list, obstacle_type=(Robot,)
-    ) -> None | bool:
+    ) -> None:
         open_list.remove(current)
         closed_list.append(current)
         neighbours = self.generate_neighbours(current.coordinates)
@@ -75,7 +76,7 @@ class Pathfinder:
                 continue
             self.update_node(neighbour, current, temp_g_value)
 
-    def check_for_blockage(self, neighbours):
+    def check_for_blockage(self, neighbours): # This will be refactored, not implemented yet
         count_robot = 0
         count_shelve = 0
         count_empty = 0
@@ -89,10 +90,10 @@ class Pathfinder:
                 count_empty += 1
 
         if count_robot == len(neighbours):
-            print("Blocked by robots")
+            logger.error("Blocked by robots")
             # raise BlockedCantMove("Blocked by robots")
         elif count_shelve == len(neighbours):
-            print("Blocked by shelves")
+            logger.error("Blocked by shelves")
             # raise BlockedCantMove("Blocked by shelves")
 
         return 1

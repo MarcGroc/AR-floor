@@ -1,6 +1,7 @@
-import logging
 import uuid
 from typing import Optional
+
+from loguru import logger
 
 from src.config.directions import Directions
 from src.items.Item import Item
@@ -10,7 +11,9 @@ FULL_BATTERY_LEVEL = 100
 LOW_BATTERY_LEVEL = 20
 CRITICAL_BATTERY_LEVEL = 15
 
+
 class Robot:
+    """ Robot class """
     def __init__(self) -> None:
         self._id: uuid.UUID = uuid.uuid4()
         self.current_location: list[int, int] = []
@@ -24,7 +27,7 @@ class Robot:
     def drive(self):
         self.available = False
         if not self.path:
-            logging.error(f"Path is empty {self.path}")
+            logger.error(f"Path is empty {self.path}")
             return
 
         self.target_location = self.path[-1]
@@ -64,11 +67,11 @@ class Robot:
                 if item in bin.content:
                     item_side_direction = side.side_direction
                     if workstation_side == item_side_direction:
-                        print(f"No need to rotate")
+                        logger.info(f"No need to rotate")
                         continue
                     else:
                         side.side_direction = workstation_side
-                        print(
+                        logger.info(
                             f"Rotate shelf from {item_side_direction} to {workstation_side}"
                         )
                     return 1
