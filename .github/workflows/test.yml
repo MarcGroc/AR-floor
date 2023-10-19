@@ -1,13 +1,6 @@
 name: Test
 
-on:
-  push:
-    branches:
-      - main
-      - actions
-  pull_request:
-    branches:
-      - actions
+on: push
 
 jobs:
   run-tests:
