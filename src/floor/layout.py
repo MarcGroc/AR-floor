@@ -35,7 +35,7 @@ class FloorLayout:
         ]
 
     def _set_layout_config(self) -> None:
-        self._initialize_to_not_used()
+        self._initialize_cells_to_not_used()
         self._initialize_shelve_storing_areas()
         self._initialize_waiting_areas()
         self._initialize_charging_area()
@@ -59,7 +59,7 @@ class FloorLayout:
                     if heading:
                         cell.heading = heading
 
-    def _initialize_to_not_used(self) -> None:
+    def _initialize_cells_to_not_used(self) -> None:
         self._assign_purpose_to_cells(
             INITIAL_ROW_COL,
             self._x_axis,

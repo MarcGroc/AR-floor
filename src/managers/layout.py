@@ -108,7 +108,7 @@ class LayoutManager:
     def initialize(self) -> list[list[Location]]:
         self.floor = self._set_shelves()
         self.floor = self._set_robots()
-        logger.info("Floor initialized")
-        for i in self.floor:
-            print(i)
+        logger.info("Floor initialized.")
+        logger.info("Shelves initialized, ready for work.")
+        logger.info("Robots initialized, ready for work.")
         return self.floor

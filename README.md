@@ -41,3 +41,5 @@ poetry install
 ```
 python src/run.py
 ```
+
+#### If You're using Pycharm mark ```src/``` directory as a source directory.

@@ -7,6 +7,10 @@ from src.items.item import Item
 from src.shelves.bin import Bin
 
 
+class ItemSizeError(Exception):
+    pass
+
+
 class Side:
     """Represents a side of shelves"""
 
@@ -21,7 +25,7 @@ class Side:
             or item.length > self.content[bin_index].length
             or item.height > self.content[bin_index].height
         ):
-            raise ValueError(
+            raise ItemSizeError(
                 "Do not add this item, incorrect size"
             )
         self.content[bin_index].content.append(item)

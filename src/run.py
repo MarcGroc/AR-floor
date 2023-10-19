@@ -1,8 +1,9 @@
 from loguru import logger
+
 from src.managers.main import MainManager
 
 
-# @logger.catch
+@logger.catch
 def main():
     manager = MainManager()
     manager.work()
