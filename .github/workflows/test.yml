@@ -1,13 +1,6 @@
 name: Test
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
+on: push
 
 jobs:
   run-tests:
@@ -42,4 +35,4 @@ jobs:
       - name: Run tests
         run: |
             source .venv/bin/activate
-            pytest ../src/tests
+            poetry run pytest
