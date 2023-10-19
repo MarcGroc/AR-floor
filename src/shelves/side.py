@@ -3,12 +3,13 @@ from uuid import uuid4
 
 
 from src.config.directions import Directions
-from src.items.Item import Item
+from src.items.item import Item
 from src.shelves.bin import Bin
 
 
 class Side:
-    """ Represents a side of shelves """
+    """Represents a side of shelves"""
+
     def __init__(self, bins: list[Bin], direction: Directions) -> None:
         self.id: uuid.UUID = uuid4()
         self.content = bins
@@ -20,7 +21,9 @@ class Side:
             or item.length > self.content[bin_index].length
             or item.height > self.content[bin_index].height
         ):
-            raise Exception("Do not add this item, incorrect size")
+            raise ValueError(
+                "Do not add this item, incorrect size"
+            )
         self.content[bin_index].content.append(item)
 
     def remove_item(self, item: Item, bin_index: int) -> None:

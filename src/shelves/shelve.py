@@ -5,7 +5,7 @@ from pydantic import PositiveInt
 
 from src.config.directions import Directions
 from src.shelves.bin import Bin
-from src.items import Item
+from src.items.item import Item
 from src.shelves.side import Side
 
 MAX_ROWS = 10
@@ -14,7 +14,8 @@ SHELVE_WIDTH = 100
 
 
 class Shelve:
-    """ Represents a shelve """
+    """Represents a shelve"""
+
     def __init__(self, columns_number: PositiveInt, rows_number: PositiveInt) -> None:
         self.id: uuid.UUID = uuid.uuid4()
         self.columns_number = columns_number
@@ -43,7 +44,6 @@ class Shelve:
         shelve_side = next(_ for _ in self.initialize_shelf if _.side_direction == side)
         shelve_side.add_item(item, bin_index)
         logger.info(f"Added item {item} to {side} bin {bin_index}")
-
 
     def remove_item(self, item: Item, side: Directions, bin_index: int) -> None:
         shelve_side = next(_ for _ in self.initialize_shelf if _.side_direction == side)

@@ -1,5 +1,6 @@
 from typing import Optional
 
+from loguru import logger
 from pydantic import PositiveInt
 
 from src.config.directions import Directions
@@ -7,12 +8,15 @@ from src.config.states import LocationStates
 from src.config.areas import FloorAreas
 from src.floor.location import Location
 
-WORKSTATION_GAP = 8
-CORNER_WORKSTATION = 4
-FIRST_PICKING_WORKSTATION = 6
-FIRST_STOWING_WORKSTATION = 10
+INITIAL_ROW_COL = 0
+END_ROW_COL = 1
 
-CHARGING_AREA_SIZE = 3
+WORKSTATION_GAP = 8
+INITIAL_WORKSTATION = 4
+INITIAL_PICKING_WORKSTATION = 6
+INITIAL_STOWING_WORKSTATION = 10
+
+CHARGING_AREA_SIZE = 4
 
 
 class FloorLayout:
@@ -31,11 +35,12 @@ class FloorLayout:
         ]
 
     def _set_layout_config(self) -> None:
-        self._initialize_paths()
-        self._initialize_paths()
+        self._initialize_to_not_used()
         self._initialize_shelve_storing_areas()
+        self._initialize_waiting_areas()
         self._initialize_charging_area()
         self._initialize_picking_and_stowing_areas()
+        self._initialize_paths()
 
     def _assign_purpose_to_cells(
         self,
@@ -54,10 +59,20 @@ class FloorLayout:
                     if heading:
                         cell.heading = heading
 
+    def _initialize_to_not_used(self) -> None:
+        self._assign_purpose_to_cells(
+            INITIAL_ROW_COL,
+            self._x_axis,
+            INITIAL_ROW_COL,
+            self._y_axis,
+            LocationStates.NOT_USED,
+            filter_purpose=None,
+        )
+
     def _initialize_shelve_storing_areas(self) -> None:
         self._assign_purpose_to_cells(
             FloorAreas.INNER_FLOOR.value,
-            -FloorAreas.INNER_FLOOR.value,
+            self._y_axis - FloorAreas.INNER_FLOOR.value,
             FloorAreas.INNER_FLOOR.value,
             self._y_axis - FloorAreas.INNER_FLOOR.value,
             LocationStates.STORING,
@@ -66,109 +81,109 @@ class FloorLayout:
     def _initialize_waiting_areas(self) -> None:
         # Top horizontal
         self._assign_purpose_to_cells(
-            FloorAreas.FIRST_WAITING_LINE.value,
+            FloorAreas.INITIAL_WAITING_LINE.value,
             FloorAreas.OUTER_FLOOR.value,
-            FloorAreas.FIRST_WAITING_LINE.value,
-            self._x_axis - FloorAreas.FIRST_WAITING_LINE.value,
+            FloorAreas.INITIAL_WAITING_LINE.value,
+            self._x_axis - FloorAreas.INITIAL_WAITING_LINE.value,
             LocationStates.WAITING,
         )
 
         # Bottom horizontal
         self._assign_purpose_to_cells(
             self._x_axis - FloorAreas.OUTER_FLOOR.value,
-            -FloorAreas.FIRST_WAITING_LINE.value,
-            FloorAreas.FIRST_WAITING_LINE.value,
-            self._x_axis - FloorAreas.FIRST_WAITING_LINE.value,
+            -FloorAreas.INITIAL_WAITING_LINE.value,
+            FloorAreas.INITIAL_WAITING_LINE.value,
+            self._x_axis - FloorAreas.INITIAL_WAITING_LINE.value,
             LocationStates.WAITING,
         )
 
         # Vertical - Left
         self._assign_purpose_to_cells(
-            FloorAreas.FIRST_WAITING_LINE.value,
-            -FloorAreas.FIRST_WAITING_LINE.value,
-            FloorAreas.FIRST_WAITING_LINE.value,
+            FloorAreas.INITIAL_WAITING_LINE.value,
+            -FloorAreas.INITIAL_WAITING_LINE.value,
+            FloorAreas.INITIAL_WAITING_LINE.value,
             FloorAreas.OUTER_FLOOR.value,
             LocationStates.WAITING,
         )
 
         # Vertical - Right
         self._assign_purpose_to_cells(
-            FloorAreas.FIRST_WAITING_LINE.value,
-            -FloorAreas.FIRST_WAITING_LINE.value,
+            FloorAreas.INITIAL_WAITING_LINE.value,
+            -FloorAreas.INITIAL_WAITING_LINE.value,
             self._y_axis - FloorAreas.OUTER_FLOOR.value,
-            self._y_axis - FloorAreas.FIRST_WAITING_LINE.value,
+            self._y_axis - FloorAreas.INITIAL_WAITING_LINE.value,
             LocationStates.WAITING,
         )
 
     def _initialize_picking_and_stowing_areas(self) -> None:
         filter_purpose = (
-            LocationStates.NOT_TAKEN
+            LocationStates.NOT_USED
         )  # Cells to be overwritten must be NOT_TAKEN
 
         for cell in range(
-            FIRST_PICKING_WORKSTATION,
-            self._x_axis - CORNER_WORKSTATION,
+            INITIAL_PICKING_WORKSTATION,
+            self._x_axis - INITIAL_WORKSTATION,
             WORKSTATION_GAP,
         ):
             self._assign_purpose_to_cells(
-                0,
-                1,
+                INITIAL_ROW_COL,
+                END_ROW_COL,
                 cell,
-                cell + 1,
+                cell + END_ROW_COL,
                 LocationStates.PICKING,
                 filter_purpose,
                 Directions.NORTH,
             )
             self._assign_purpose_to_cells(
-                -1,
+                -END_ROW_COL,
                 None,
                 cell,
-                cell + 1,
+                cell + END_ROW_COL,
                 LocationStates.PICKING,
                 filter_purpose,
                 Directions.SOUTH,
             )
 
         for cell in range(
-            FIRST_STOWING_WORKSTATION,
-            self._x_axis - CORNER_WORKSTATION,
+            INITIAL_STOWING_WORKSTATION,
+            self._x_axis - INITIAL_WORKSTATION,
             WORKSTATION_GAP,
         ):
             self._assign_purpose_to_cells(
-                0,
-                1,
+                INITIAL_ROW_COL,
+                END_ROW_COL,
                 cell,
-                cell + 1,
+                cell + END_ROW_COL,
                 LocationStates.STOWING,
                 filter_purpose,
                 Directions.NORTH,
             )
             self._assign_purpose_to_cells(
-                -1,
+                -END_ROW_COL,
                 None,
                 cell,
-                cell + 1,
+                cell + END_ROW_COL,
                 LocationStates.STOWING,
                 filter_purpose,
                 Directions.SOUTH,
             )
 
         for cell in range(
-            CORNER_WORKSTATION, self._y_axis - CORNER_WORKSTATION, WORKSTATION_GAP
+            INITIAL_WORKSTATION, self._y_axis - INITIAL_WORKSTATION, WORKSTATION_GAP
         ):
             self._assign_purpose_to_cells(
                 cell,
-                cell + 1,
-                0,
-                1,
+                cell + END_ROW_COL,
+                INITIAL_ROW_COL,
+                END_ROW_COL,
                 LocationStates.PICKING,
                 filter_purpose,
                 Directions.WEST,
             )
             self._assign_purpose_to_cells(
                 cell,
-                cell + 1,
-                -1,
+                cell + END_ROW_COL,
+                -END_ROW_COL,
                 None,
                 LocationStates.PICKING,
                 filter_purpose,
@@ -176,21 +191,21 @@ class FloorLayout:
             )
 
         for cell in range(
-            WORKSTATION_GAP, self._y_axis - CORNER_WORKSTATION, WORKSTATION_GAP
+            WORKSTATION_GAP, self._y_axis - INITIAL_WORKSTATION, WORKSTATION_GAP
         ):
             self._assign_purpose_to_cells(
                 cell,
-                cell + 1,
-                0,
-                1,
+                cell + END_ROW_COL,
+                INITIAL_ROW_COL,
+                END_ROW_COL,
                 LocationStates.STOWING,
                 filter_purpose,
                 Directions.WEST,
             )
             self._assign_purpose_to_cells(
                 cell,
-                cell + 1,
-                -1,
+                cell + END_ROW_COL,
+                -END_ROW_COL,
                 None,
                 LocationStates.STOWING,
                 filter_purpose,
@@ -198,15 +213,7 @@ class FloorLayout:
             )
 
     def _initialize_paths(self) -> None:
-        # Defaulting all None purpose cells to NOT_TAKEN
-        self._assign_purpose_to_cells(
-            0,
-            self._x_axis,
-            0,
-            self._y_axis,
-            LocationStates.NOT_TAKEN,
-            filter_purpose=None,
-        )
+        # Defaulting all None purpose cells to DO_NOT_USE
 
         # Vertical left and right
         self._assign_purpose_to_cells(
@@ -214,14 +221,14 @@ class FloorLayout:
             -FloorAreas.OUTER_FLOOR.value,
             FloorAreas.OUTER_FLOOR.value,
             FloorAreas.INNER_FLOOR.value,
-            LocationStates.ON_PATH,
+            LocationStates.PATH,
         )
         self._assign_purpose_to_cells(
             FloorAreas.OUTER_FLOOR.value,
             -FloorAreas.OUTER_FLOOR.value,
             self._y_axis - FloorAreas.INNER_FLOOR.value,
             self._y_axis - FloorAreas.OUTER_FLOOR.value,
-            LocationStates.ON_PATH,
+            LocationStates.PATH,
         )
 
         # Horizontal top
@@ -230,7 +237,7 @@ class FloorLayout:
             FloorAreas.INNER_FLOOR.value,
             FloorAreas.INNER_FLOOR.value,
             self._x_axis - FloorAreas.INNER_FLOOR.value,
-            LocationStates.ON_PATH,
+            LocationStates.PATH,
         )
 
         # Horizontal bottom
@@ -239,27 +246,34 @@ class FloorLayout:
             self._x_axis - FloorAreas.OUTER_FLOOR.value,
             FloorAreas.INNER_FLOOR.value,
             self._y_axis - FloorAreas.INNER_FLOOR.value,
-            LocationStates.ON_PATH,
+            LocationStates.PATH,
         )
-
-        # Aisles horizontal
-        for row_start in range(
-            FloorAreas.STARTING_AISLE.value,
-            self._x_axis - FloorAreas.INNER_FLOOR.value,
-            FloorAreas.AISLE_GAP.value,
-        ):
-            self._assign_purpose_to_cells(
-                row_start, row_start + 1, 0, self._y_axis, LocationStates.ON_PATH
-            )
-
         # Aisles vertical
         for col_start in range(
-            FloorAreas.STARTING_AISLE.value,
+            FloorAreas.INITIAL_AISLE.value,
             self._y_axis - FloorAreas.INNER_FLOOR.value,
             FloorAreas.AISLE_GAP.value,
         ):
             self._assign_purpose_to_cells(
-                0, self._x_axis, col_start, col_start + 1, LocationStates.ON_PATH
+                INITIAL_ROW_COL + END_ROW_COL,
+                self._x_axis - END_ROW_COL,
+                col_start,
+                col_start + END_ROW_COL,
+                LocationStates.PATH,
+            )
+
+        # Aisles horizontal
+        for row_start in range(
+            FloorAreas.INITIAL_AISLE.value,
+            self._x_axis - FloorAreas.INNER_FLOOR.value,
+            FloorAreas.AISLE_GAP.value,
+        ):
+            self._assign_purpose_to_cells(
+                row_start,
+                row_start + END_ROW_COL,
+                INITIAL_ROW_COL + END_ROW_COL,
+                self._y_axis - END_ROW_COL,
+                LocationStates.PATH,
             )
 
     def _initialize_charging_area(self) -> None:
@@ -272,7 +286,9 @@ class FloorLayout:
             LocationStates.CHARGING,
         )
 
-    def __str__(self):
-        return "\n".join(
-            " ".join(str(cell) for cell in row) for row in self.floor_layout
-        )
+    # def __str__(self):
+    #     return "\n".join(
+    #         " ".join(str(cell) for cell in row) for row in self.floor_layout
+    #     )
+    def __repr__(self):
+        return str(self.floor_layout)

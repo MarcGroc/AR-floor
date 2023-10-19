@@ -8,10 +8,6 @@ from src.shelves.shelve import Shelve
 COST = 1
 
 
-class BlockedCantMove(Exception):
-    pass
-
-
 class Pathfinder:
     """A* algorith implementation"""
 

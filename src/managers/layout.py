@@ -25,7 +25,9 @@ class LayoutManager:
         self.workstations_stowing = self.get_all_workstations_stowing()
         self.charging_stations = self.get_available_charging_stations()
 
-    def __validate_dimension(self, floor_dimension):
+    def __validate_dimension(self, floor_dimension: int) -> None:
+        if floor_dimension < 1:
+            raise ValueError("Floor dimension must be at least 1")
         if floor_dimension < 30:
             raise ValueError("Floor dimension must be at least 30")
 
@@ -107,4 +109,6 @@ class LayoutManager:
         self.floor = self._set_shelves()
         self.floor = self._set_robots()
         logger.info("Floor initialized")
+        for i in self.floor:
+            print(i)
         return self.floor

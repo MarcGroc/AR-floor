@@ -1,7 +1,7 @@
 import pytest
 from pytest_mock import mocker
 
-from src.paths.pathfinder import Pathfinder, BlockedCantMove
+from src.paths.pathfinder import Pathfinder
 from src.floor.location import Location
 from src.robots.robot import Robot
 from src.config.neighbours import Neighbours

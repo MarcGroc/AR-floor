@@ -1,7 +1,7 @@
 import pytest
 
 from src.config.directions import Directions
-from src.items.Item import Item
+from src.items.item import Item
 from src.robots.robot import Robot
 
 

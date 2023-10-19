@@ -2,12 +2,11 @@ from enum import Enum
 
 
 class LocationStates(Enum):
-    """ Location states """
-    NOT_TAKEN = 0
-    TAKEN = 1
-    ON_PATH = 2
-    WAITING = 3
-    PICKING = 4
-    STOWING = 5
-    CHARGING = 6
-    STORING = 7
+    """ Location states, describing purpose of a location"""
+    NOT_USED: int = 0
+    STORING: int = 1
+    PATH: int = 2
+    WAITING: int = 3
+    PICKING: int = 4
+    STOWING: int = 5
+    CHARGING: int = 6

@@ -15,10 +15,12 @@ class PathManager:
         self.pathfinder = Pathfinder
 
     def check_battery_level(self, robot: Robot, layout: LayoutManager) -> None:
-        logger.debug(f"Robot battery level - {round(robot.battery_level, 2)}")
+        logger.warning(f"Robot battery level - {round(robot.battery_level, 2)}")
         if robot.battery_level < CRITICAL_BATTERY_LEVEL:
+            logger.critical(f"Critical battery level {round(robot.battery_level, 2)}")
             self.get_path_to_charging_station(robot, layout)
         elif robot.battery_level < LOW_BATTERY_LEVEL:
+            logger.warning(f"Low battery level {round(robot.battery_level, 2)}")
             self.get_path_to_empty_location(robot, layout)
             self.get_path_to_charging_station(robot, layout)
 

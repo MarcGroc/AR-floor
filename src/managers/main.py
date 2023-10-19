@@ -1,11 +1,12 @@
 from loguru import logger
 
+from src.items.item import Item
 from src.managers.layout import LayoutManager
 from src.managers.path import PathManager
 from src.robots.robot import Robot
 
 
-FLOOR_DIMENSION = 30
+FLOOR_DIMENSION = 40
 
 
 class MainManager:
@@ -36,7 +37,7 @@ class MainManager:
         )
         logger.info("Continuing work - Robot on path to Workstation")
         self._pathfinder.get_limited_path(self.get_workstation(), robot, self._layout)
-        logger.info("Path completed")
+        logger.success("Path completed")
 
     def __repr__(self):
         return f"{self._layout.floor}"

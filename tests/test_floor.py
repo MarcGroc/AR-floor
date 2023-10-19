@@ -48,10 +48,10 @@ class TestFloor:
 
         layout._initialize_waiting_areas()
 
-        for row in range(FloorAreas.FIRST_WAITING_LINE.value, FloorAreas.OUTER_FLOOR.value):
+        for row in range(FloorAreas.INITIAL_WAITING_LINE.value, FloorAreas.OUTER_FLOOR.value):
             for col in range(
-                FloorAreas.FIRST_WAITING_LINE.value,
-                SIZE_LAYOUT - FloorAreas.FIRST_WAITING_LINE.value,
+                FloorAreas.INITIAL_WAITING_LINE.value,
+                SIZE_LAYOUT - FloorAreas.INITIAL_WAITING_LINE.value,
             ):
                 assert layout.floor_layout[row][col].purpose == LocationStates.WAITING
 

@@ -3,9 +3,9 @@ from enum import Enum
 
 class Directions(Enum):
 
-    """Robot move directions"""
+    """Robot move directions and workstation  heading directions"""
 
-    NORTH = 0
-    SOUTH = 1
-    EAST = 2
-    WEST = 3
+    NORTH: int = 0
+    SOUTH: int = 1
+    EAST: int = 2
+    WEST: int = 3

@@ -4,7 +4,7 @@ from typing import Optional
 from loguru import logger
 
 from src.config.directions import Directions
-from src.items.Item import Item
+from src.items.item import Item
 from src.shelves.shelve import Shelve
 
 FULL_BATTERY_LEVEL = 100
@@ -60,7 +60,7 @@ class Robot:
 
     def rotate_shelve(self, item: Item, workstation_side):
         if self.taken_shelve is None:
-            return None
+            return
 
         for side in self.taken_shelve.content:
             for bin_index, bin in enumerate(side.content):
@@ -74,7 +74,7 @@ class Robot:
                         logger.info(
                             f"Rotate shelf from {item_side_direction} to {workstation_side}"
                         )
-                    return 1
+                    return True
 
     def initialize(self):
         self.available = True
