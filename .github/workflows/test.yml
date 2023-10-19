@@ -6,8 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - main
-
+      - actions
 
 jobs:
   run-tests:
@@ -42,4 +41,4 @@ jobs:
       - name: Run tests
         run: |
             source .venv/bin/activate
-            pytest /src/tests
+            pytest /tests
