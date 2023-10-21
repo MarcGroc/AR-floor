@@ -2,12 +2,8 @@ import pytest
 
 from src.managers.layout import LayoutManager
 from src.managers.path import PathManager
-from src.robots.robot import (
-    Robot,
-    CRITICAL_BATTERY_LEVEL,
-    LOW_BATTERY_LEVEL,
-    FULL_BATTERY_LEVEL,
-)
+from src.robots.robot import Robot
+from src.robots.constants import CRITICAL_BATTERY_LEVEL, LOW_BATTERY_LEVEL, FULL_BATTERY_LEVEL
 from src.managers.main import FLOOR_DIMENSION
 
 

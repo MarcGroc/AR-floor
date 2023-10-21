@@ -25,7 +25,7 @@ class Pathfinder:
         self.start = Location(starting_location[0], starting_location[1])
         self.end = Location(target_location[0], target_location[1])
 
-    def get_path_no_load(self) -> list[list[int, int]] | None:
+    def get_path_no_load(self) -> list[list[int, int]] | bool:
         self.start.f_value = self.calculate_f_value(self.start, self.end)
         open_list, closed_list = [self.start], []
 
@@ -36,9 +36,9 @@ class Pathfinder:
 
             self.process_node(current, open_list, closed_list, obstacle_type=(Robot,))
 
-        return None
+        return False
 
-    def get_path_with_load(self) -> list[list[int, int]] | None:
+    def get_path_with_load(self) -> list[list[int, int]] | bool:
         self.start.f_value = self.calculate_f_value(self.start, self.end)
         open_list, closed_list = [self.start], []
 
@@ -51,7 +51,7 @@ class Pathfinder:
                 current, open_list, closed_list, obstacle_type=(Robot, Shelve)
             )
 
-        return None
+        return False
 
     def process_node(
         self, current, open_list, closed_list, obstacle_type=(Robot,)

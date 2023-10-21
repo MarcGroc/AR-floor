@@ -6,20 +6,17 @@ from loguru import logger
 from src.config.directions import Directions
 from src.items.item import Item
 from src.shelves.shelve import Shelve
-
-FULL_BATTERY_LEVEL = 100
-LOW_BATTERY_LEVEL = 20
-CRITICAL_BATTERY_LEVEL = 15
-
+from src.robots.constants import FULL_BATTERY_LEVEL
 
 class Robot:
-    """ Robot class """
+    """Robot class"""
+
     def __init__(self) -> None:
         self._id: uuid.UUID = uuid.uuid4()
         self.current_location: list[int, int] = []
         self.battery_level: int = FULL_BATTERY_LEVEL
-        self.available: bool = None
-        self.heading: Directions = None
+        self.available: bool = None  # noqa
+        self.heading: Directions = None  # noqa
         self.path: list[list[int, int]] = []
         self.target_location: list[int, int] = []
         self.taken_shelve: Optional[Shelve] = None
@@ -56,25 +53,33 @@ class Robot:
     def update_battery(self):
         if self.taken_shelve is None:
             self.battery_level -= 0.1
-        self.battery_level -= 0.5
+        else:
+            self.battery_level -= 0.5
 
     def rotate_shelve(self, item: Item, workstation_side):
         if self.taken_shelve is None:
             return
 
+        side_to_rotate = self._find_side_to_rotate(item)
+        if side_to_rotate:
+            self._rotate_side_if_needed(side_to_rotate, workstation_side)
+
+    def _find_side_to_rotate(self, item: Item):
         for side in self.taken_shelve.content:
-            for bin_index, bin in enumerate(side.content):
+            for bin in side.content:
                 if item in bin.content:
-                    item_side_direction = side.side_direction
-                    if workstation_side == item_side_direction:
-                        logger.info(f"No need to rotate")
-                        continue
-                    else:
-                        side.side_direction = workstation_side
-                        logger.info(
-                            f"Rotate shelf from {item_side_direction} to {workstation_side}"
-                        )
-                    return True
+                    return side
+        return None
+
+    def _rotate_side_if_needed(self, side, workstation_side):
+        item_side_direction = side.side_direction
+        if workstation_side == item_side_direction:
+            logger.info(f"No need to rotate")
+        else:
+            side.side_direction = workstation_side
+            logger.info(
+                f"Rotate shelf from {item_side_direction} to {workstation_side}"
+            )
 
     def initialize(self):
         self.available = True

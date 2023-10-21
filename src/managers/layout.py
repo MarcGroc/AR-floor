@@ -65,22 +65,25 @@ class LayoutManager:
         ]
 
     def get_available_charging_stations(self) -> list[list[int, int]]:
-        return [
-            location.coordinates
-            for row in self.layout.floor_layout
-            for location in row
-            if location.purpose == LocationStates.CHARGING
-        ]
+        coordinates_list = []
+        for row in self.layout.floor_layout:
+            for location in row:
+                if location.purpose == LocationStates.CHARGING:
+                    coordinates_list.append(location.coordinates)
+        return coordinates_list
 
     def get_not_taken_location(self) -> list[list[int, int]]:
-        return [
-            location.coordinates
-            for row in self.layout.floor_layout
-            for location in row
-            if location.purpose == LocationStates.STORING and location.content is None
-        ]
+        coordinates_list = []
+        for row in self.layout.floor_layout:
+            for location in row:
+                if (
+                    location.purpose == LocationStates.STORING
+                    and location.content is None
+                ):
+                    coordinates_list.append(location.coordinates)
+        return coordinates_list
 
-    def _init_shelve(self, location):
+    def _init_shelve(self, location: Location) -> None:
         if location is not None and location.purpose == LocationStates.STORING:
             new_shelve = self.shelve(randrange(1, 6), randrange(1, 10)).initialize()
             location.content = new_shelve
@@ -94,8 +97,15 @@ class LayoutManager:
                 self._init_shelve(location)
         return floor
 
+    def _init_robot(self, cell: int, location: Location, row: list[Location]) -> None:
+        if location.purpose == LocationStates.CHARGING:
+            new_robot = self.robot().initialize()
+            row[cell].content = new_robot
+            row[cell].content.current_location = row[cell].coordinates
+            self.all_robots.append(new_robot)
+
     def _set_robots(self) -> list[list[Location]]:
-        floor = self._set_shelves()
+        floor = self.layout.floor_layout
         for row in floor:
             for cell, location in enumerate(row):
                 if location.purpose == LocationStates.CHARGING:

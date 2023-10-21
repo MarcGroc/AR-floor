@@ -1,12 +1,8 @@
 from loguru import logger
 from src.managers.layout import LayoutManager
 from src.paths.pathfinder import Pathfinder
-from src.robots.robot import (
-    Robot,
-    FULL_BATTERY_LEVEL,
-    LOW_BATTERY_LEVEL,
-    CRITICAL_BATTERY_LEVEL,
-)
+from src.robots.robot import Robot
+from src.robots.constants import CRITICAL_BATTERY_LEVEL, LOW_BATTERY_LEVEL, FULL_BATTERY_LEVEL
 
 
 class PathManager:
@@ -29,10 +25,10 @@ class PathManager:
     ) -> Robot:
         """Returns Robot with shelve on it"""
         try:
-            self.check_battery_level(robot, layout)
             path_to_destination = self.pathfinder(
                 layout.floor, robot.current_location, target_location
             ).get_path_no_load()
+
             robot.path = path_to_destination
             robot.drive()
             if robot.current_location == target_location:
@@ -55,8 +51,8 @@ class PathManager:
     def get_limited_path(
         self, target_location: list[int, int], robot: Robot, layout: LayoutManager
     ) -> Robot:
+        self.check_battery_level(robot, layout)
         try:
-            self.check_battery_level(robot, layout)
             path_to_destination = self.pathfinder(
                 layout.floor, robot.current_location, target_location
             ).get_path_with_load()
@@ -97,11 +93,11 @@ class PathManager:
     def get_path_to_charging_station(
         self, robot: Robot, layout: LayoutManager
     ) -> Robot:
+        charging_station = layout.get_available_charging_stations()[0]
         try:
             layout.floor[robot.current_location[0]][
                 robot.current_location[1]
             ].content = None
-            charging_station = layout.get_available_charging_stations()[0]
             path_to_charging_station = self.pathfinder(
                 layout.floor, robot.current_location, charging_station
             ).get_path_no_load()

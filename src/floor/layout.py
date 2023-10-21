@@ -1,6 +1,5 @@
 from typing import Optional
 
-from loguru import logger
 from pydantic import PositiveInt
 
 from src.config.directions import Directions
@@ -17,7 +16,6 @@ INITIAL_PICKING_WORKSTATION = 6
 INITIAL_STOWING_WORKSTATION = 10
 
 CHARGING_AREA_SIZE = 4
-
 
 class FloorLayout:
     """Creates floor layout and assign Location to each cell"""
@@ -45,19 +43,23 @@ class FloorLayout:
     def _assign_purpose_to_cells(
         self,
         row_start: int,
-        row_end: int,
+        row_end: int | None,
         col_start: int,
-        col_end: int,
+        col_end: int | None,
         purpose: LocationStates,
         filter_purpose: Optional[LocationStates] = None,
         heading: Optional[Directions] = None,
     ) -> None:
         for row in self.floor_layout[row_start:row_end]:
             for cell in row[col_start:col_end]:
-                if filter_purpose is None or cell.purpose == filter_purpose:
-                    cell.purpose = purpose
-                    if heading:
-                        cell.heading = heading
+                self._update_cell(cell, purpose, heading, filter_purpose)
+
+    def _update_cell(self, cell: Location, purpose: LocationStates, heading: Directions, filter_purpose: Optional[LocationStates] = None) -> None:
+        if filter_purpose is not None and cell.purpose != filter_purpose:
+            return
+        cell.purpose = purpose
+        if heading:
+            cell.heading = heading
 
     def _initialize_cells_to_not_used(self) -> None:
         self._assign_purpose_to_cells(
@@ -213,8 +215,6 @@ class FloorLayout:
             )
 
     def _initialize_paths(self) -> None:
-        # Defaulting all None purpose cells to DO_NOT_USE
-
         # Vertical left and right
         self._assign_purpose_to_cells(
             FloorAreas.OUTER_FLOOR.value,
@@ -286,9 +286,5 @@ class FloorLayout:
             LocationStates.CHARGING,
         )
 
-    # def __str__(self):
-    #     return "\n".join(
-    #         " ".join(str(cell) for cell in row) for row in self.floor_layout
-    #     )
     def __repr__(self):
         return str(self.floor_layout)

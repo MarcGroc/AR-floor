@@ -6,7 +6,7 @@ from src.managers.path import PathManager
 from src.robots.robot import Robot
 
 
-FLOOR_DIMENSION = 40
+FLOOR_DIMENSION = 30
 
 
 class MainManager:
@@ -20,13 +20,13 @@ class MainManager:
         return choice(self._layout.available_shelves).current_location
 
     def assign_robot(self) -> Robot:
-        return choice(self._layout.available_robots)
+        return self._layout.available_robots[0]
 
     def get_workstation(self) -> list[int, int]:
         return choice(self._layout.workstations_picking)
 
     def get_available_charging_station(self) -> list[int, int]:
-        return choice(self._layout.charging_stations)
+        return self._layout.charging_stations[0]
 
     def work(self) -> None:
         """This is "visualization" of system in action"""

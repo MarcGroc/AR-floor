@@ -8,9 +8,7 @@ from src.shelves.bin import Bin
 from src.items.item import Item
 from src.shelves.side import Side
 
-MAX_ROWS = 10
-MAX_COLUMNS = 6
-SHELVE_WIDTH = 100
+from src.shelves.constants import MAX_COLUMNS, MAX_ROWS, SHELVE_WIDTH
 
 
 class Shelve:
