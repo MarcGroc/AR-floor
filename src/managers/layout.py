@@ -9,7 +9,8 @@ from src.shelves.shelve import Shelve
 
 
 class LayoutManager:
-    """ Layout Manager initializes floor layout, robots, shelves and holds information about them """
+    """Layout Manager initializes floor layout, robots, shelves and holds information about them"""
+
     def __init__(self, floor_dimension: int) -> None:
         self.__validate_dimension(floor_dimension)
         self.layout: FloorLayout = FloorLayout(floor_dimension)
@@ -49,20 +50,20 @@ class LayoutManager:
         return [shelve for shelve in self.all_shelves if shelve.available is True]
 
     def get_all_workstations_picking(self) -> list[list[int, int]]:
-        return [
-            location.coordinates
-            for row in self.layout.floor_layout
-            for location in row
-            if location.purpose == LocationStates.PICKING
-        ]
+        coordinates_list = []
+        for row in self.layout.floor_layout:
+            for location in row:
+                if location.purpose == LocationStates.PICKING:
+                    coordinates_list.append(location.coordinates)
+        return coordinates_list
 
     def get_all_workstations_stowing(self) -> list[list[int, int]]:
-        return [
-            location.coordinates
-            for row in self.layout.floor_layout
-            for location in row
-            if location.purpose == LocationStates.STOWING
-        ]
+        coordinates_list = []
+        for row in self.layout.floor_layout:
+            for location in row:
+                if location.purpose == LocationStates.STOWING:
+                    coordinates_list.append(location.coordinates)
+        return coordinates_list
 
     def get_available_charging_stations(self) -> list[list[int, int]]:
         coordinates_list = []
@@ -108,11 +109,7 @@ class LayoutManager:
         floor = self.layout.floor_layout
         for row in floor:
             for cell, location in enumerate(row):
-                if location.purpose == LocationStates.CHARGING:
-                    new_robot = self.robot().initialize()
-                    row[cell].content = new_robot
-                    row[cell].content.current_location = row[cell].coordinates
-                    self.all_robots.append(new_robot)
+                self._init_robot(cell, location, row)
         return floor
 
     def initialize(self) -> list[list[Location]]:

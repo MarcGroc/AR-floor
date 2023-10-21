@@ -6,16 +6,8 @@ from src.config.directions import Directions
 from src.config.states import LocationStates
 from src.config.areas import FloorAreas
 from src.floor.location import Location
+from src.floor.constants import *
 
-INITIAL_ROW_COL = 0
-END_ROW_COL = 1
-
-WORKSTATION_GAP = 8
-INITIAL_WORKSTATION = 4
-INITIAL_PICKING_WORKSTATION = 6
-INITIAL_STOWING_WORKSTATION = 10
-
-CHARGING_AREA_SIZE = 4
 
 class FloorLayout:
     """Creates floor layout and assign Location to each cell"""

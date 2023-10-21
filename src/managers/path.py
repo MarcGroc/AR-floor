@@ -24,6 +24,8 @@ class PathManager:
         self, target_location: list[int, int], robot: Robot, layout: LayoutManager
     ) -> Robot:
         """Returns Robot with shelve on it"""
+        # TODO try is too big and  don't specify any concrete exception's type
+        self.check_battery_level(robot, layout)
         try:
             path_to_destination = self.pathfinder(
                 layout.floor, robot.current_location, target_location
