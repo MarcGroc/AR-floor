@@ -2,6 +2,7 @@
 name = "ar-floor"
 version = "0.1.0"
 description = ""
+authors = ["MarcGroc <marcgroc12@gmail.com>"]
 readme = "README.md"
 packages = [{include = "ar_floor"}]
 
